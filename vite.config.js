@@ -4,6 +4,7 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: "/level-editor/",
   plugins: [svelte()],
   server: {
     https: {
