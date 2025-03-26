@@ -13,10 +13,18 @@
   <div class="center-panel">
     <div class="canvas-toolbar">
       <div class="canvas-toolbar-left">
-        <button>Q</button>
-        <button>W</button>
-        <button>E</button>
-        <button>R</button>
+        <Tooltip text="Not implemented">
+          <button class="tool-button">Q</button>
+        </Tooltip>
+        <Tooltip text="Draw / Delete walls">
+          <button id="wall-tool" class="tool-button"on:click={() => {switchTool(Tool.WALL)}}>W</button>
+        </Tooltip>
+        <Tooltip text="Draw / Delete platforms">
+          <button id="platform-tool" class="tool-button"on:click={() => {switchTool(Tool.PLATFORM)}}>E</button>
+        </Tooltip>
+        <Tooltip text="Not implemented">
+          <button class="tool-button">R</button>
+        </Tooltip>
       </div>
       <div class="canvas-toolbar-right">
         <button
@@ -34,7 +42,7 @@
       </div>
     </div>
     <!-- Level Editor -->
-    <div style="width: 800px; height: 600px; overflow:hidden; position: relative; border: 2px solid white; display: {mode === 0 ? 'grid' : 'none'};">
+    <div style="width: 800px; height: 600px; overflow:hidden; position: relative; border: 2px solid white; display: {mode === Mode.EDITOR ? 'grid' : 'none'};">
       <div id="canvas-floors">
         <button on:click={addFloor}> + </button>
         <button class="floor-button"> 1 </button>
@@ -49,7 +57,7 @@
       </canvas>
     </div>
     <!-- Playtest -->
-    <div style= "display: {mode === 1 ? 'block' : 'none'}">
+    <div style= "display: {mode === Mode.PLAYTEST ? 'block' : 'none'}">
       <div id="playtest-container">
         <iframe id="game-iframe"
             title="Playtest"
@@ -88,6 +96,8 @@
 
 
 <script>
+  import Tooltip from './Tooltip.svelte';
+
   class Line {
     constructor(x1, y1, x2, y2) {
       this.x1 = x1;
@@ -140,15 +150,83 @@
     }
   }
 
+  class Square {
+    // Get start and end points and imply the rest
+    constructor(x, y, width, height) {
+      this.x1 = x;
+      this.y1 = y;
+
+      this.x2 = x + width;
+      this.y2 = this.y1;
+
+      this.x3 = this.x1;
+      this.y3 = this.y1 + height;
+      
+      this.x4 = this.x1 + width;
+      this.y4 = this.y1 + height;
+
+      this.isHighlighted = false;
+    }
+
+    getWidth() {
+      return this.x2 - this.x1;
+    }
+
+    getHeight() {
+      return this.y4 - this.y1;
+    }
+
+    move(x, y) {
+      this.x1 += x;
+      this.x2 += x;
+      this.x3 += x;
+      this.x4 += x;
+
+      this.y1 += y;
+      this.y2 += y;
+      this.y3 += y;
+      this.y4 += y;
+    }
+
+    updateSquare(x4, y4) {
+      this.x2 = x4;
+      this.y3 = y4;
+      
+      this.x4 = x4;
+      this.y4 = y4;
+    }
+
+    isPointInside(x, y) {
+      const checkX = x > this.x1 && x < this.x2 || x < this.x1 && x > this.x2;
+      const checkY = y > this.y1 && y < this.y4 || y < this.y1 && y > this.y4;
+      return checkX && checkY;
+    }
+  }
+
   const lineHighlightColor = '#ff0000';
   const lineColor = '#ffffff';
+  const platformColor = '#3f3f3f';
+  const platformHighlightColor = '#ff000080';
 
-  let mode = 0; // 0: Editor, 1: Playtest
+  const Mode = {
+    EDITOR: 0,
+    PLAYTEST: 1
+  };
+
+  let mode = Mode.EDITOR;
+
+  const Tool = {
+    MOVE: 0,
+    WALL: 1,
+    PLATFORM: 2,
+  }
+
+  let tool = Tool.WALL; 
 
   let canvas;
   let ctx;
-  let floors = [{'lines': []}];
-  let active_floor = 0;
+  let floors = [{'lines': [], 'platforms': []}];
+  let activeFloor = 0;
 
   let isDrawing = false;
   let gridSize = 25;
@@ -166,10 +244,13 @@
 
   onMount(() => {
     if (canvas) {
-      ctx = canvas.getContext("2d"); // Get the 2D context
-      drawGrid(); // Now you can safely call drawGrid
+      ctx = canvas.getContext("2d");
+      drawGrid();
     }
 
+    window.addEventListener("keydown", handleKeydown);
+
+    // Global function for Godot to fetch
     window.getLinesData = () => {
       return JSON.stringify(getLinesData())
     };
@@ -206,28 +287,58 @@
       ctx.stroke();
     }
 
-    // Draw the drawn lines
-    floors.forEach((floor) => {
-      floor.lines.forEach((line) => {
+    let i = 0;
+    floors.forEach(floor => {
+      // Reduce alpha below us by 50% for every floor
+      const floorDelta = activeFloor - i;
+      let alpha = 1;
+
+      if (floorDelta > 0)
+        alpha = Math.pow(0.5, floorDelta);
+      else if (floorDelta < 0)
+        alpha = 0; // Drawing above us are invisible
+      
+      // Draw platforms
+      floor.platforms.forEach(platform => {
+        const color = setHexAlpha(platformColor, alpha * 0.5); // Platforms start with 0.5 opacity
+        ctx.fillStyle = platform.isHighlighted? platformHighlightColor : color;
+        ctx.fillRect(platform.x1, platform.y1, platform.getWidth(), platform.getHeight());
+      });
+
+      // Draw lines
+      floor.lines.forEach(line => {
         ctx.lineWidth = line.isHighlighted? 4 : 2;
-        ctx.strokeStyle = line.isHighlighted? lineHighlightColor : lineColor;
+        const color = setHexAlpha(lineColor, alpha);
+        
+        ctx.strokeStyle = line.isHighlighted? lineHighlightColor : color;
         ctx.beginPath();
         ctx.moveTo(line.x1, line.y1);
         ctx.lineTo(line.x2, line.y2);
         ctx.stroke();
-      })
+      });
+      i++;
     });
     ctx.restore();
   };
 
+  function setHexAlpha(color, alpha) {
+    const _alpha = Math.round(alpha * 255);
+    const alphaHex = _alpha.toString(16).padStart(2,'0');
+    color += alphaHex;
+    return color;
+  }
+
   function switchFloor(floorIndex) {
-    active_floor = floorIndex;
-    console.log(`Switched floor to ${floorIndex}`);
+    floorIndex = Math.max(0, Math.min(floorIndex, floors.length - 1));
+    activeFloor = floorIndex;
+    updateFloorButtons();
+    drawGrid();
   }
 
   function addFloor() {
     floors.push({
-      'lines': []
+      'lines': [],
+      'platforms': []
     });
 
     updateFloorButtons();
@@ -247,19 +358,23 @@
     }
     
     for (let i = 0; i < floorAmount; i++) {
-      if (i < buttonsAmount) {
-        container.children[i + 1].textContent = `${floorAmount - i}`;
-        container.children[i + 1].onclick = () => switchFloor(floorAmount - i - 1);
-      }
+      let btn;
+      if (i < buttonsAmount)
+        btn = container.children[i + 1];
       else {
-        let btn = document.createElement("button");
-        btn.textContent = `${floorAmount - i}`;
+        btn = document.createElement("button");
         btn.className = "floor-button";
-        btn.onclick = () => switchFloor(floorAmount - i - 1);
         container.appendChild(btn);
       }
-    }
 
+      btn.textContent = `${floorAmount - i}`;
+      btn.onclick = () => switchFloor(floorAmount - i - 1);
+      
+      if (floorAmount - i - 1=== activeFloor)
+        btn.classList.add("active");
+      else
+        btn.classList.remove("active");
+    }
   }
 
   const getSnapped = (pos) => Math.round(pos / gridSize) * gridSize;
@@ -275,21 +390,31 @@
     event.preventDefault();
     const mousePos = getMousePos(event);
     
+    // Draw
     if (event.button === 0) {
       const x = getSnapped(mousePos.x);
       const y = getSnapped(mousePos.y);
       isDrawing = true;
-      floors[active_floor].lines.push(new Line(x, y, x, y));
-      drawGrid(); }
+
+      if (tool === Tool.WALL)
+        floors[activeFloor].lines.push(new Line(x, y, x, y));
+      else if (tool === Tool.PLATFORM) // Platforms
+        floors[activeFloor].platforms.push(new Square(x, y, 0, 0));
+      
+      drawGrid(); 
+      } // Pan
       else if (event.button === 1) {
         isPanning = true;
         startX = event.clientX;
         startY = event.clientY;
-    } else if (event.button === 2) {
-      floors[active_floor].lines = floors[active_floor].lines.filter(line => line.isHighlighted == false);
+      } // Delete 
+      else if (event.button === 2) {
+        if (tool === Tool.WALL)
+          floors[activeFloor].lines = floors[activeFloor].lines.filter(line => line.isHighlighted == false);
+        else if (tool === Tool.PLATFORM)
+          floors[activeFloor].platforms = floors[activeFloor].platforms.filter(platform => platform.isHighlighted == false);
       drawGrid();
     }
-
   };
 
   const handleMouseMove = (event) => { 
@@ -298,9 +423,15 @@
     if (isDrawing) {
       const x = getSnapped(mousePos.x);
       const y = getSnapped(mousePos.y);
-      const lines = floors[active_floor].lines;
-      lines[lines.length - 1].x2 = x;
-      lines[lines.length - 1].y2 = y;
+      
+      if (tool === Tool.WALL) {// Lines
+        const lines = floors[activeFloor].lines;
+        lines[lines.length - 1].x2 = x;
+        lines[lines.length - 1].y2 = y;
+      } else if (tool === Tool.PLATFORM) { // Platforms
+        const platforms = floors[activeFloor].platforms;
+        platforms[platforms.length - 1].updateSquare(x, y);
+      }
     } else if (isPanning) {
       offsetX += event.clientX - startX;
       offsetY += event.clientY - startY;
@@ -308,9 +439,13 @@
       startY = event.clientY;
     } else {
       // Highlight
-      floors[active_floor].lines.forEach(line => {
-        line.isHighlighted = line.isPointOnLine(mousePos.x, mousePos.y);
-      });
+      if (tool === Tool.WALL) {
+        floors[activeFloor].lines.forEach(line => {
+          line.isHighlighted = line.isPointOnLine(mousePos.x, mousePos.y);});
+      } else if (tool === Tool.PLATFORM) {
+        floors[activeFloor].platforms.forEach(platform => {
+          platform.isHighlighted = platform.isPointInside(mousePos.x, mousePos.y);});
+      }
     }
     drawGrid();
   };
@@ -318,7 +453,7 @@
   const handleMouseUp = (event) => {
     if (event.button === 0) {
       isDrawing = false;
-      const lines = floors[active_floor].lines;
+      const lines = floors[activeFloor].lines;
       if (lines.length > 0 && lines[lines.length - 1].isPoint())
         lines.pop();
     } else if (event.button === 1) {
@@ -340,6 +475,31 @@
     }
 
     zoomFactor = Math.min(Math.max(zoomFactor, 0.25), 5);
+  }
+
+  const handleKeydown = (event) => {
+    const key = event.key;
+    
+    // ctrl + s exports the canvas
+    if (event.ctrlKey && event.key === "s") {
+      event.preventDefault();
+      exportCanvas();
+    }
+
+    // Numbers switch floors
+    const num = Number(key);
+    if (!isNaN(num)) {
+      if (num == 0)
+        switchFloor(9);
+      else
+        switchFloor(num - 1);
+    }
+
+    // q,w,e,r switch tools
+    else if (key === 'w')
+      switchTool(Tool.WALL);
+    else if (key === 'e')
+      switchTool(Tool.PLATFORM);
   }
 
   const clearCanvas = () => {
@@ -381,46 +541,49 @@
     const materialId = "StandardMaterial3D_nmni2";
 
     const thickness = 0.25;
-    const y = wallHeight * 0.5; // Offset from ground level
     
     let sub_resources = ""; // Text containing sub resources
     let nodes = "";         // Text containing nodes
-    let i = 0;
-    
-    floors.forEach(floor => floor.lines.forEach(line => {
-      const engineScale = exportUnit / gridSize;
-      const x = (line.x1 + line.x2) * 0.5 * engineScale;
-      const z = (line.y1 + line.y2) * 0.5 * engineScale;
-      const name = `wall_${i}`;
-      
-      const length = line.getLength() * engineScale;
-      const angle = line.getAngle();
+    let i = 0;  // Object number
+    let j = 0; // Floor number
+    floors.forEach(floor => {
+      floor.lines.forEach(line => {
+        const engineScale = exportUnit / gridSize;
+        const x = (line.x1 + line.x2) * 0.5 * engineScale;
+        const y = (wallHeight * j) + (wallHeight * 0.5);
+        const z = (line.y1 + line.y2) * 0.5 * engineScale;
+        const name = `wall_${i}`;
+        
+        const length = line.getLength() * engineScale;
+        const angle = line.getAngle();
 
-      // Sub resources
-      let boxRandomId = Math.random().toString(36).substring(2, 7); // 5-char random ID
-      sub_resources += `[sub_resource type="BoxShape3D" id="BoxShape3D_${boxRandomId}"]\n`;
-      sub_resources += `size = Vector3(${length}, ${wallHeight}, ${thickness})\n\n`;
+        // Sub resources
+        let boxRandomId = Math.random().toString(36).substring(2, 7); // 5-char random ID
+        sub_resources += `[sub_resource type="BoxShape3D" id="BoxShape3D_${boxRandomId}"]\n`;
+        sub_resources += `size = Vector3(${length}, ${wallHeight}, ${thickness})\n\n`;
 
-      let quadRandomId = Math.random().toString(36).substring(2, 7); // 5-char random ID
-      sub_resources += `[sub_resource type="QuadMesh" id="QuadMesh_${quadRandomId}"]\n`;
-      sub_resources += `size = Vector2(${length}, ${wallHeight})\n\n`;
+        let quadRandomId = Math.random().toString(36).substring(2, 7); // 5-char random ID
+        sub_resources += `[sub_resource type="QuadMesh" id="QuadMesh_${quadRandomId}"]\n`;
+        sub_resources += `size = Vector2(${length}, ${wallHeight})\n\n`;
 
-      // StaticBody3D
-      nodes += `[node name="${name}" type="StaticBody3D" parent="."]\n`;
-      nodes += `transform = Transform3D(${Math.cos(angle)}, 0, ${Math.sin(angle)}, 0, 1, 0, ${-Math.sin(angle)}, 0, ${Math.cos(angle)}, ${x}, ${y}, ${z})\n\n`;
-      
-      // Collision shape
-      nodes += `[node name="CollisionShape3D" type="CollisionShape3D" parent="${name}"]\n`;
-      nodes += `shape = SubResource("BoxShape3D_${boxRandomId}")\n\n`;
+        // StaticBody3D
+        nodes += `[node name="${name}" type="StaticBody3D" parent="."]\n`;
+        nodes += `transform = Transform3D(${Math.cos(angle)}, 0, ${Math.sin(angle)}, 0, 1, 0, ${-Math.sin(angle)}, 0, ${Math.cos(angle)}, ${x}, ${y}, ${z})\n\n`;
+        
+        // Collision shape
+        nodes += `[node name="CollisionShape3D" type="CollisionShape3D" parent="${name}"]\n`;
+        nodes += `shape = SubResource("BoxShape3D_${boxRandomId}")\n\n`;
 
-      // MeshInstance
-      nodes += `[node name="MeshInstance3D" type="MeshInstance3D" parent="${name}"]\n`;
-      nodes += `material_override = SubResource("${materialId}")`;
-      nodes += `mesh = SubResource("QuadMesh_${quadRandomId}")\n`;
-      nodes += `skeleton = NodePath("../..")\n\n`;
+        // MeshInstance
+        nodes += `[node name="MeshInstance3D" type="MeshInstance3D" parent="${name}"]\n`;
+        nodes += `material_override = SubResource("${materialId}")`;
+        nodes += `mesh = SubResource("QuadMesh_${quadRandomId}")\n`;
+        nodes += `skeleton = NodePath("../..")\n\n`;
 
-      i++;
-    }));
+        i++;
+      });
+      j++;
+    });
 
     // Floor resources
     tscnContent += `[sub_resource type="PlaneMesh" id="PlaneMesh_17dxa"]\n`;
@@ -454,7 +617,7 @@
   }
 
   function switchMode() {
-    if (mode === 0)
+    if (mode === Mode.EDITOR)
       playtest();
     else
       toEditor();
@@ -473,6 +636,32 @@
   function toEditor() {
     mode = 0;
     switchModeBtnText = "Playtest";
+  }
+
+  function switchTool(newTool) {
+    if (isDrawing) return false; // Prevent switching tools mid drawing
+
+    const oldTool = getToolButton(tool);
+    if (oldTool != undefined)
+      oldTool.classList.remove('active');
+
+    tool = newTool;
+
+    const curTool = getToolButton(tool);
+    if (curTool != undefined)
+      curTool.classList.add('active');
+    
+    floors[activeFloor].lines.map(line => line.isHighlighted = false);
+    floors[activeFloor].platforms.map(line => line.isHighlighted = false);
+
+    return true;
+  }
+
+  function getToolButton(toolId) {
+    if (toolId === Tool.WALL)
+      return document.getElementById('wall-tool');
+    else if (toolId === Tool.PLATFORM)
+      return document.getElementById('platform-tool');
   }
 
   function getLinesData() {

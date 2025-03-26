@@ -143,3 +143,19 @@ button:focus-visible {
   height: 100%;
   gap: 5px; 
 }
+
+.tool-button {
+  background-color: #1a1a1a;;
+}
+
+.tool-button.active {
+  background-color: #3a3a3a;;
+}
+
+.floor-button {
+  background-color: #1a1a1a;;
+}
+
+.floor-button.active {
+  background-color: #3a3a3a;;
+}
