@@ -225,7 +225,7 @@
 
   let canvas;
   let ctx;
-  let floors = [{'lines': [], 'platforms': []}];
+  let floors = [{lines: [], platforms: []}];
   let activeFloor = 0;
 
   let isDrawing = false;
@@ -337,8 +337,8 @@
 
   function addFloor() {
     floors.push({
-      'lines': [],
-      'platforms': []
+      lines: [],
+      platforms: []
     });
 
     updateFloorButtons();
@@ -505,6 +505,7 @@
   const clearCanvas = () => {
     floors.forEach(floor => {
       floor.lines = [];
+      floor.platforms = [];
     });
 
     drawGrid();
@@ -527,7 +528,10 @@
       reader.onload = function(e) {
         clearCanvas();
         const floorsData = JSON.parse(e.target.result);
-        floors = floorsData.map(floor => ({lines: floor.lines.map(line => new Line(line.x1, line.y1, line.x2, line.y2))}));
+        floors = floorsData.map(floor => ({
+          lines: floor.lines.map(line => new Line(line.x1, line.y1, line.x2, line.y2)),
+          platforms: floor.platforms.map(platform => new Square(platform.x1, platform.y1, platform.x2 - platform.x1, platform.y4 - platform.y1))
+        }));
         drawGrid();
       };
       reader.readAsText(file);
