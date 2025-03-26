@@ -177,7 +177,7 @@
 
   onMount(() => {
         const iframe = document.getElementById("game-iframe");
-        iframe.src = "../static/LevelEditorWebApp.html";
+        iframe.src = "/level-editor/static/LevelEditorWebApp.html";
         updateFloorButtons();
     });
 
