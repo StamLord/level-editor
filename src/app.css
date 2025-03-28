@@ -138,6 +138,12 @@ button:focus-visible {
   border: 2px solid white;
 }
 
+.switch-mode-button {
+  background-color: #D32F2F;
+  font-size: 125%;
+  height: 12%;
+}
+
 .playtest-toolbar {
   text-align: left;
   height: 100%;
@@ -145,17 +151,38 @@ button:focus-visible {
 }
 
 .tool-button {
-  background-color: #1a1a1a;;
+  background-color: #1a1a1a;
 }
 
 .tool-button.active {
-  background-color: #3a3a3a;;
+  background-color: #3a3a3a;
 }
 
 .floor-button {
-  background-color: #1a1a1a;;
+  background-color: #1a1a1a;
 }
 
 .floor-button.active {
-  background-color: #3a3a3a;;
+  background-color: #3a3a3a;
+}
+
+#player-settings {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto;
+  grid-template-rows: auto;
+  gap: 10px;
+}
+
+#player-settings label {
+  grid-column: span 2;
+}
+
+#player-settings input[type="number"] {
+  width: 50px;
+}
+
+#player-settings p {
+  margin: 0%;
+  height: 100%;
 }

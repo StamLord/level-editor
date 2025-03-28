@@ -17,13 +17,16 @@
           <button class="tool-button">Q</button>
         </Tooltip>
         <Tooltip text="Draw / Delete walls">
-          <button id="wall-tool" class="tool-button"on:click={() => {switchTool(Tool.WALL)}}>W</button>
+          <button id="wall-tool" class="tool-button" on:click={() => {switchTool(Tool.WALL)}}>W</button>
         </Tooltip>
         <Tooltip text="Draw / Delete platforms">
-          <button id="platform-tool" class="tool-button"on:click={() => {switchTool(Tool.PLATFORM)}}>E</button>
+          <button id="platform-tool" class="tool-button" on:click={() => {switchTool(Tool.PLATFORM)}}>E</button>
         </Tooltip>
-        <Tooltip text="Not implemented">
-          <button class="tool-button">R</button>
+        <Tooltip text="Draw / Rotate / Delete ramps">
+          <button id="ramp-tool" class="tool-button" on:click={() => {switchTool(Tool.RAMP)}}>R</button>
+        </Tooltip>
+        <Tooltip text="Draw / Delete fences">
+          <button id="fence-tool" class="tool-button" on:click={() => {switchTool(Tool.FENCE)}}>T</button>
         </Tooltip>
       </div>
       <div class="canvas-toolbar-right">
@@ -70,25 +73,68 @@
 
   </div>
   <div class="side-panel right">
+    <button
+      class="switch-mode-button"
+      on:click={switchMode}>
+      {switchModeBtnText}
+    </button>
+    {#if mode === Mode.PLAYTEST}
+      <h3>Player Settings</h3>
+      <div id="player-settings">
+        <label for="player-height-slider">Height</label>
+        <input id="player-height-slider" 
+            type="range"
+            min="0.1"
+            max="20"
+            step="0.1"
+            bind:value={playerHeight}>
+        <input type="number" bind:value={playerHeight}>
+        <label for="player-radius-slider">Radius</label>
+        <input id="player-radius-slider" 
+            type="range"
+            min="0.1"
+            max="10"
+            step="0.1"
+            bind:value={playerRadius}>
+        <input type="number" bind:value={playerRadius}>
+        <label for="player-speed-slider">Speed</label>
+        <input id="player-speed-slider" 
+            type="range"
+            min="0"
+            max="20"
+            step="0.1"
+            bind:value={playerSpeed}>
+        <input type="number" bind:value={playerSpeed}>
+        <label for="player-sprint-speed-slider">Sprint Speed</label>
+        <input id="player-sprint-speed-slider" 
+            type="range"
+            min="0"
+            max="20"
+            step="0.1"
+            bind:value={playerSprintSpeed}>
+        <input type="number" bind:value={playerSprintSpeed}>
+        <label for="player-jump-velocity-slider">Jump Velocity</label>
+        <input id="player-jump-velocity-slider" 
+            type="range"
+            min="0"
+            max="20"
+            step="0.1"
+            bind:value={playerJumpVelocity}>
+        <input type="number" bind:value={playerJumpVelocity}>
+      </div>
+    {/if}
     <label for="export-unit-slider">Engine Units</label>
     <div class="export-unit-container">
       <input id="export-unit-slider" 
-        type="range" min="1" value="1"
-        on:input={setEngineUnitsFromSlider}/>
+        type="range" min="1"
+        bind:value={exportUnit}/>
       <input id ="export-unit-input" 
         type="number" min="1"
-        on:input={setEngineUnitsFromInput}/>
+        bind:value={exportUnit}/>
     </div>
     <button
       on:click={exportToTscn}>
       Export to Godot
-    </button>
-    <button
-      on:click={switchMode}>
-      {switchModeBtnText}
-    </button>
-    <button>
-      Test
     </button>
   </div>
 </div>
@@ -203,6 +249,26 @@
     }
   }
 
+  class Ramp extends Square {
+
+    static Direction = {
+      UP: 0,
+      RIGHT: 1,
+      DOWN: 2,
+      LEFT: 3
+    }
+
+    constructor(x, y, width, height, direction = 0) {
+      super(x, y, width, height);
+      this.direction = direction;
+    }
+
+    rotate() {
+      this.direction++;
+      this.direction %= Object.keys(Ramp.Direction).length;
+    }
+  }
+
   const lineHighlightColor = '#ff0000';
   const lineColor = '#ffffff';
   const platformColor = '#3f3f3f';
@@ -219,13 +285,21 @@
     MOVE: 0,
     WALL: 1,
     PLATFORM: 2,
+    RAMP: 3,
+    FENCE: 4,
   }
 
   let tool = Tool.WALL; 
 
   let canvas;
   let ctx;
-  let floors = [{lines: [], platforms: []}];
+  let floors = [{
+    lines: [], 
+    platforms: [],
+    ramps: [],
+    fences: []
+  }];
+
   let activeFloor = 0;
 
   let isDrawing = false;
@@ -235,10 +309,16 @@
   
   let isPanning = false;
   let startX, startY;
-  let offsetX = 0;
-  let offsetY = 0;
+  let offsetX = -2000;
+  let offsetY = -2000;
 
   let exportUnit = 1; // Will convert grid unit (25) into 1 meter in Godot
+
+  let playerHeight = 2;
+  let playerRadius = 0.3;
+  let playerSpeed = 5;
+  let playerSprintSpeed = 8;
+  let playerJumpVelocity = 4.5;
 
   import { onMount } from 'svelte';
 
@@ -254,6 +334,11 @@
     window.getLinesData = () => {
       return JSON.stringify(getLinesData())
     };
+
+    window.getPlayerData = () => {
+      return JSON.stringify(getPlayerData())
+    };
+
   });
 
   onMount(() => {
@@ -299,23 +384,38 @@
         alpha = 0; // Drawing above us are invisible
       
       // Draw platforms
+      const pColor = setHexAlpha(platformColor, alpha * 0.5); // Platforms start with 0.5 opacity
       floor.platforms.forEach(platform => {
-        const color = setHexAlpha(platformColor, alpha * 0.5); // Platforms start with 0.5 opacity
-        ctx.fillStyle = platform.isHighlighted? platformHighlightColor : color;
+        ctx.fillStyle = platform.isHighlighted? platformHighlightColor : pColor;
         ctx.fillRect(platform.x1, platform.y1, platform.getWidth(), platform.getHeight());
       });
 
       // Draw lines
+      const lColor = setHexAlpha(lineColor, alpha);
       floor.lines.forEach(line => {
         ctx.lineWidth = line.isHighlighted? 4 : 2;
-        const color = setHexAlpha(lineColor, alpha);
         
-        ctx.strokeStyle = line.isHighlighted? lineHighlightColor : color;
+        ctx.strokeStyle = line.isHighlighted? lineHighlightColor : lColor;
         ctx.beginPath();
         ctx.moveTo(line.x1, line.y1);
         ctx.lineTo(line.x2, line.y2);
         ctx.stroke();
       });
+      
+      // Draw fences
+      ctx.setLineDash([10, 5]); 
+      const fColor = setHexAlpha(lineColor, alpha);
+      floor.fences.forEach(fence => {
+        ctx.lineWidth = fence.isHighlighted? 4 : 2;
+        
+        ctx.strokeStyle = fence.isHighlighted? lineHighlightColor : fColor;
+        ctx.beginPath();
+        ctx.moveTo(fence.x1, fence.y1);
+        ctx.lineTo(fence.x2, fence.y2);
+        ctx.stroke();
+      });
+      ctx.setLineDash([]); 
+      
       i++;
     });
     ctx.restore();
@@ -338,7 +438,8 @@
   function addFloor() {
     floors.push({
       lines: [],
-      platforms: []
+      platforms: [],
+      fences: []
     });
 
     updateFloorButtons();
@@ -398,8 +499,10 @@
 
       if (tool === Tool.WALL)
         floors[activeFloor].lines.push(new Line(x, y, x, y));
-      else if (tool === Tool.PLATFORM) // Platforms
-        floors[activeFloor].platforms.push(new Square(x, y, 0, 0));
+      else if (tool === Tool.PLATFORM)
+      floors[activeFloor].platforms.push(new Square(x, y, 0, 0));
+      else if (tool === Tool.FENCE)
+        floors[activeFloor].fences.push(new Line(x, y, x, y));
       
       drawGrid(); 
       } // Pan
@@ -413,6 +516,8 @@
           floors[activeFloor].lines = floors[activeFloor].lines.filter(line => line.isHighlighted == false);
         else if (tool === Tool.PLATFORM)
           floors[activeFloor].platforms = floors[activeFloor].platforms.filter(platform => platform.isHighlighted == false);
+        else if (tool === Tool.FENCE)
+          floors[activeFloor].fences = floors[activeFloor].fences.filter(line => line.isHighlighted == false);
       drawGrid();
     }
   };
@@ -424,13 +529,17 @@
       const x = getSnapped(mousePos.x);
       const y = getSnapped(mousePos.y);
       
-      if (tool === Tool.WALL) {// Lines
+      if (tool === Tool.WALL) {
         const lines = floors[activeFloor].lines;
         lines[lines.length - 1].x2 = x;
         lines[lines.length - 1].y2 = y;
-      } else if (tool === Tool.PLATFORM) { // Platforms
+      } else if (tool === Tool.PLATFORM) {
         const platforms = floors[activeFloor].platforms;
         platforms[platforms.length - 1].updateSquare(x, y);
+      } else if (tool === Tool.FENCE) {
+        const fences = floors[activeFloor].fences;
+        fences[fences.length - 1].x2 = x;
+        fences[fences.length - 1].y2 = y;
       }
     } else if (isPanning) {
       offsetX += event.clientX - startX;
@@ -445,6 +554,9 @@
       } else if (tool === Tool.PLATFORM) {
         floors[activeFloor].platforms.forEach(platform => {
           platform.isHighlighted = platform.isPointInside(mousePos.x, mousePos.y);});
+      } else if (tool === Tool.FENCE) {
+        floors[activeFloor].fences.forEach(fence => {
+          fence.isHighlighted = fence.isPointOnLine(mousePos.x, mousePos.y);});
       }
     }
     drawGrid();
@@ -500,12 +612,17 @@
       switchTool(Tool.WALL);
     else if (key === 'e')
       switchTool(Tool.PLATFORM);
+    else if (key === 'r')
+      switchTool(Tool.RAMP);
+    else if (key === 't')
+      switchTool(Tool.FENCE);
   }
 
   const clearCanvas = () => {
     floors.forEach(floor => {
       floor.lines = [];
       floor.platforms = [];
+      floor.fences = [];
     });
 
     drawGrid();
@@ -530,7 +647,8 @@
         const floorsData = JSON.parse(e.target.result);
         floors = floorsData.map(floor => ({
           lines: floor.lines.map(line => new Line(line.x1, line.y1, line.x2, line.y2)),
-          platforms: floor.platforms.map(platform => new Square(platform.x1, platform.y1, platform.x2 - platform.x1, platform.y4 - platform.y1))
+          platforms: floor.platforms.map(platform => new Square(platform.x1, platform.y1, platform.x2 - platform.x1, platform.y4 - platform.y1)),
+          fences: floor.fences.map(fence => new Line(fence.x1, fence.y1, fence.x2, fence.y2))
         }));
         drawGrid();
       };
@@ -666,6 +784,10 @@
       return document.getElementById('wall-tool');
     else if (toolId === Tool.PLATFORM)
       return document.getElementById('platform-tool');
+    else if (toolId === Tool.RAMP)
+      return document.getElementById('ramp-tool');
+    else if (toolId === Tool.FENCE)
+      return document.getElementById('fence-tool');
   }
 
   function getLinesData() {
@@ -673,6 +795,16 @@
       'scale': exportUnit / gridSize,
       'floors': floors,
       'height': wallHeight
+    };
+  }
+
+  function getPlayerData() {
+    return {
+      'height': playerHeight,
+      'radius': playerRadius,
+      'speed': playerSpeed,
+      'sprint_speed': playerSprintSpeed,
+      'jump_velocity': playerJumpVelocity
     };
   }
 
@@ -700,20 +832,6 @@
 
   function triggerFileImport() {
     document.getElementById('fileImport').click();
-  }
-
-  function setEngineUnitsFromSlider() {
-    const exportUnitSlider = document.getElementById('export-unit-slider');
-    const exportUnitInput = document.getElementById('export-unit-input');
-    exportUnit = exportUnitSlider.value;
-    exportUnitInput.value = exportUnitSlider.value;
-  }
-
-  function setEngineUnitsFromInput() {
-    const exportUnitSlider = document.getElementById('export-unit-slider');
-    const exportUnitInput = document.getElementById('export-unit-input');
-    exportUnit = exportUnitInput.value;
-    exportUnitSlider.value = exportUnitInput.value;
   }
 
   function captureMouse(canvas) {
