@@ -28,6 +28,9 @@
         <Tooltip text="Draw / Delete fences">
           <button id="fence-tool" class="tool-button" on:click={() => {switchTool(Tool.FENCE)}}>T</button>
         </Tooltip>
+        <Tooltip text="Draw / Delete stairs">
+          <button id="stairs-tool" class="tool-button" on:click={() => {switchTool(Tool.STAIRS)}}>S</button>
+        </Tooltip>
       </div>
       <div class="canvas-toolbar-right">
         <button
@@ -235,17 +238,56 @@
     }
 
     updateSquare(x4, y4) {
-      this.x2 = x4;
-      this.y3 = y4;
-      
-      this.x4 = x4;
-      this.y4 = y4;
+      if (this.x1 != x4) {
+        this.x2 = x4;
+        this.x4 = x4;
+      }
+
+      if (this.y1 != y4) {
+        this.y3 = y4;
+        this.y4 = y4;
+      }
+    }
+
+    fixSquare() {
+      if (this.x1 > this.x2 || this.x1 > this.x4) {
+        let tmp = this.x1;
+        this.x1 = this.x2;
+        this.x2 = tmp;
+        this.x3 = this.x1;
+        this.x4 = this.x2;
+      }
+
+      if (this.y1 > this.y3 || this.y1 > this.y4) {
+        let tmp = this.y1;
+        this.y1 = this.y3;
+        this.y3 = tmp;
+        this.y2 = this.y1;
+        this.y4 = this.y3;
+      }
     }
 
     isPointInside(x, y) {
       const checkX = x > this.x1 && x < this.x2 || x < this.x1 && x > this.x2;
       const checkY = y > this.y1 && y < this.y4 || y < this.y1 && y > this.y4;
       return checkX && checkY;
+    }
+
+    getCenter() {
+      return {
+        x: (this.x1 + this.x2) * 0.5,
+        y: (this.y1 + this.y4) * 0.5,
+      }
+    }
+
+    // A square is inverted vertically if it is drawn from bottom to top
+    isInvertedVertically() {
+      return this.y4 < this.y1;
+    }
+
+     // A square is inverted horizontally if it is drawn from right to left
+     isInvertedHorizontally() {
+      return this.x2 < this.x1;
     }
   }
 
@@ -267,12 +309,32 @@
       this.direction++;
       this.direction %= Object.keys(Ramp.Direction).length;
     }
+
+    isVertical() {
+      return this.direction === Ramp.Direction.UP || this.direction === Ramp.Direction.DOWN;
+    }
+
+    isHorizontal() {
+      return this.direction === Ramp.Direction.LEFT || this.direction === Ramp.Direction.RIGHT;
+    }
+
+    getLength() {
+      return (this.isVertical())? this.getHeight() : this.getWidth();
+    }
+  }
+
+  class Stairs extends Ramp {
+    constructor(x, y, width, height, direction = 0) {
+      super(x, y, width, height, direction);
+    }
   }
 
   const lineHighlightColor = '#ff0000';
   const lineColor = '#ffffff';
   const platformColor = '#3f3f3f';
   const platformHighlightColor = '#ff000080';
+  const rampColor = '#3f3f3f';
+  const rampHighlightColor = '#00ff0080';
 
   const Mode = {
     EDITOR: 0,
@@ -287,6 +349,7 @@
     PLATFORM: 2,
     RAMP: 3,
     FENCE: 4,
+    STAIRS: 5,
   }
 
   let tool = Tool.WALL; 
@@ -297,7 +360,8 @@
     lines: [], 
     platforms: [],
     ramps: [],
-    fences: []
+    fences: [],
+    stairs: [],
   }];
 
   let activeFloor = 0;
@@ -389,37 +453,151 @@
         ctx.fillStyle = platform.isHighlighted? platformHighlightColor : pColor;
         ctx.fillRect(platform.x1, platform.y1, platform.getWidth(), platform.getHeight());
       });
+      
+      // Draw ramps
+      const rColor = setHexAlpha(rampColor, alpha * 0.5); // Platforms start with 0.5 opacity
+      floor.ramps.forEach(ramp => {
+        ctx.fillStyle = ramp.isHighlighted? rampHighlightColor : rColor;
+        drawRamp(ctx, ramp);
+      });
 
       // Draw lines
       const lColor = setHexAlpha(lineColor, alpha);
       floor.lines.forEach(line => {
-        ctx.lineWidth = line.isHighlighted? 4 : 2;
-        
-        ctx.strokeStyle = line.isHighlighted? lineHighlightColor : lColor;
-        ctx.beginPath();
-        ctx.moveTo(line.x1, line.y1);
-        ctx.lineTo(line.x2, line.y2);
-        ctx.stroke();
-      });
-      
+        drawLine(ctx, line, line.isHighlighted? 4 : 2, line.isHighlighted? lineHighlightColor : lColor);});
+
       // Draw fences
       ctx.setLineDash([10, 5]); 
       const fColor = setHexAlpha(lineColor, alpha);
       floor.fences.forEach(fence => {
-        ctx.lineWidth = fence.isHighlighted? 4 : 2;
-        
-        ctx.strokeStyle = fence.isHighlighted? lineHighlightColor : fColor;
-        ctx.beginPath();
-        ctx.moveTo(fence.x1, fence.y1);
-        ctx.lineTo(fence.x2, fence.y2);
-        ctx.stroke();
-      });
-      ctx.setLineDash([]); 
+        drawLine(ctx, fence, fence.isHighlighted? 4 : 2, fence.isHighlighted? lineHighlightColor :fColor);});
       
+      ctx.setLineDash([]);
+
+      // Draw stairs
+      const sColor = setHexAlpha(rampColor, alpha * 0.5); // Platforms start with 0.5 opacity
+      floor.stairs.forEach(stair => {
+        ctx.fillStyle = stair.isHighlighted? rampHighlightColor : sColor;
+        drawStairs(ctx, stair);
+      });
+
       i++;
     });
+
     ctx.restore();
   };
+
+  function drawLine(context, line, width, color) {
+    context.save();
+
+    context.lineWidth = width;
+    context.strokeStyle = color;
+    context.beginPath();
+    context.moveTo(line.x1, line.y1);
+    context.lineTo(line.x2, line.y2);
+    context.stroke();
+
+    context.restore();
+  }
+
+  function drawRamp(context, ramp) {
+    context.save();
+
+    context.fillRect(ramp.x1, ramp.y1, ramp.getWidth(), ramp.getHeight());
+
+      // Draw arrow
+      const center = ramp.getCenter();
+      const margins = ramp.getLength() * 0.25; // 50% of the length, divided by 2 to account for offest from center
+      const arrowHeadHeight = margins * 0.5;
+      const arrowHeadWidth = margins * 0.5;
+      
+      let direction = ramp.direction;
+      
+      if (ramp.isInvertedVertically()) {
+        if (direction === Ramp.Direction.UP)
+          direction = Ramp.Direction.DOWN;
+        else if (direction === Ramp.Direction.DOWN)
+          direction = Ramp.Direction.UP;
+      }
+      
+      if (ramp.isInvertedVertically()) {
+        if (direction === Ramp.Direction.RIGHT)
+          direction = Ramp.Direction.LEFT;
+        else if (direction === Ramp.Direction.LEFT)
+          direction = Ramp.Direction.RIGHT;
+      }
+
+      if (direction === Ramp.Direction.UP || direction === Ramp.Direction.DOWN) {
+        // Vertical Line
+        context.beginPath();
+        context.moveTo(center.x, center.y - margins);
+        context.lineTo(center.x, center.y + margins);
+        
+        // Arrow Head
+        const arrowEnd = direction === Ramp.Direction.DOWN? arrowHeadHeight : -arrowHeadHeight;
+        const arrowTip = direction === Ramp.Direction.DOWN? margins : -margins;
+        context.moveTo(center.x, center.y + arrowTip);
+        context.lineTo(center.x - arrowHeadWidth, center.y + arrowEnd);
+        context.moveTo(center.x, center.y + arrowTip);
+        context.lineTo(center.x + arrowHeadWidth, center.y + arrowEnd);
+      } else {
+        // Horizontal line
+        context.beginPath();
+        context.moveTo(center.x - margins, center.y);
+        context.lineTo(center.x + margins, center.y);
+
+        // Arrow Head
+        const xOffest = direction === Ramp.Direction.RIGHT? arrowHeadHeight : -arrowHeadHeight;
+        const xStart = direction === Ramp.Direction.RIGHT? margins : -margins;
+        context.moveTo(center.x + xStart, center.y);
+        context.lineTo(center.x + xOffest, center.y + arrowHeadWidth);
+        context.moveTo(center.x + xStart, center.y);
+        context.lineTo(center.x + xOffest, center.y - arrowHeadWidth);
+      }
+
+      context.lineWidth = 4;
+      context.stroke();
+      context.restore();
+  }
+
+  function drawStairs(context, stair) {
+    drawRamp(context, stair);
+    context.save();
+
+    const lineAmount = wallHeight / 0.25; // Number of steps needed to get to next floor
+    
+    context.lineWidth = 0.5;
+
+    // Vertical lines for horizontal ramp
+    if (stair.direction === Ramp.Direction.LEFT || stair.direction === Ramp.Direction.RIGHT) {
+      const lineInterval = stair.getWidth() / lineAmount;
+
+      for(let i = 0; i < lineAmount; i++) {
+        const x = stair.x1 + lineInterval * i;
+        context.moveTo(x, stair.y1);
+        context.lineTo(x, stair.y4);
+      }
+
+      const lastX = stair.x1 + lineInterval * lineAmount;
+      context.moveTo(lastX, stair.y1);
+      context.lineTo(lastX, stair.y4);
+    } else { // Horizontal lines for vartical ramp
+      const lineInterval = stair.getHeight() / lineAmount;
+
+      for(let i = 0; i < lineAmount; i++) {
+        const y = stair.y1 + lineInterval * i;
+        context.moveTo(stair.x1, y);
+        context.lineTo(stair.x2, y);
+      }
+
+      const lastY = stair.y1 + lineInterval * lineAmount;
+      context.moveTo(stair.x1, lastY);
+      context.lineTo(stair.x2, lastY);
+    }
+
+    context.stroke();
+    context.restore();
+  }
 
   function setHexAlpha(color, alpha) {
     const _alpha = Math.round(alpha * 255);
@@ -429,6 +607,7 @@
   }
 
   function switchFloor(floorIndex) {
+    deHighlightAll();
     floorIndex = Math.max(0, Math.min(floorIndex, floors.length - 1));
     activeFloor = floorIndex;
     updateFloorButtons();
@@ -439,7 +618,9 @@
     floors.push({
       lines: [],
       platforms: [],
-      fences: []
+      ramps: [],
+      fences: [],
+      stairs: [],
     });
 
     updateFloorButtons();
@@ -500,9 +681,25 @@
       if (tool === Tool.WALL)
         floors[activeFloor].lines.push(new Line(x, y, x, y));
       else if (tool === Tool.PLATFORM)
-      floors[activeFloor].platforms.push(new Square(x, y, 0, 0));
+        floors[activeFloor].platforms.push(new Square(x, y, 0, 0));
+      else if (tool === Tool.RAMP) {
+        const highlighted = floors[activeFloor].ramps.filter(ramp => ramp.isHighlighted); 
+        if (highlighted.length > 0) {
+          isDrawing = false; // Prevent editing last ramp
+          highlighted.map(ramp => ramp.rotate());
+        } else
+          floors[activeFloor].ramps.push(new Ramp(x, y, 0, 0));
+      }
       else if (tool === Tool.FENCE)
         floors[activeFloor].fences.push(new Line(x, y, x, y));
+      else if (tool === Tool.STAIRS) {
+        const highlighted = floors[activeFloor].stairs.filter(stair => stair.isHighlighted); 
+        if (highlighted.length > 0) {
+          isDrawing = false; // Prevent editing last stair
+          highlighted.map(stair => stair.rotate());
+        } else
+          floors[activeFloor].stairs.push(new Stairs(x, y, 0, 0));
+      }
       
       drawGrid(); 
       } // Pan
@@ -516,8 +713,12 @@
           floors[activeFloor].lines = floors[activeFloor].lines.filter(line => line.isHighlighted == false);
         else if (tool === Tool.PLATFORM)
           floors[activeFloor].platforms = floors[activeFloor].platforms.filter(platform => platform.isHighlighted == false);
+        else if (tool === Tool.RAMP)
+          floors[activeFloor].ramps = floors[activeFloor].ramps.filter(ramp => ramp.isHighlighted == false);
         else if (tool === Tool.FENCE)
           floors[activeFloor].fences = floors[activeFloor].fences.filter(line => line.isHighlighted == false);
+        else if (tool === Tool.STAIRS)
+          floors[activeFloor].stairs = floors[activeFloor].stairs.filter(stair => stair.isHighlighted == false);
       drawGrid();
     }
   };
@@ -536,10 +737,16 @@
       } else if (tool === Tool.PLATFORM) {
         const platforms = floors[activeFloor].platforms;
         platforms[platforms.length - 1].updateSquare(x, y);
+      } else if (tool === Tool.RAMP) {
+        const ramps = floors[activeFloor].ramps;
+        ramps[ramps.length - 1].updateSquare(x, y);
       } else if (tool === Tool.FENCE) {
         const fences = floors[activeFloor].fences;
         fences[fences.length - 1].x2 = x;
         fences[fences.length - 1].y2 = y;
+      } else if (tool === Tool.STAIRS) {
+        const stairs = floors[activeFloor].stairs;
+        stairs[stairs.length - 1].updateSquare(x, y);
       }
     } else if (isPanning) {
       offsetX += event.clientX - startX;
@@ -554,10 +761,16 @@
       } else if (tool === Tool.PLATFORM) {
         floors[activeFloor].platforms.forEach(platform => {
           platform.isHighlighted = platform.isPointInside(mousePos.x, mousePos.y);});
+      } else if (tool === Tool.RAMP) {
+        floors[activeFloor].ramps.forEach(ramp => {
+          ramp.isHighlighted = ramp.isPointInside(mousePos.x, mousePos.y);});
       } else if (tool === Tool.FENCE) {
         floors[activeFloor].fences.forEach(fence => {
           fence.isHighlighted = fence.isPointOnLine(mousePos.x, mousePos.y);});
-      }
+      } else if (tool === Tool.STAIRS) {
+        floors[activeFloor].stairs.forEach(stair => {
+          stair.isHighlighted = stair.isPointInside(mousePos.x, mousePos.y);});
+      } 
     }
     drawGrid();
   };
@@ -568,6 +781,21 @@
       const lines = floors[activeFloor].lines;
       if (lines.length > 0 && lines[lines.length - 1].isPoint())
         lines.pop();
+
+      // Fix inverted squares
+      const platforms = floors[activeFloor].platforms;
+      const ramps = floors[activeFloor].ramps;
+      const stairs = floors[activeFloor].stairs;
+
+      if (platforms.length > 0)
+        platforms[platforms.length - 1].fixSquare();
+
+      if (ramps.length > 0)
+        ramps[ramps.length - 1].fixSquare();
+
+      if (stairs.length > 0)
+        stairs[stairs.length - 1].fixSquare();
+
     } else if (event.button === 1) {
       isPanning = false;
     }
@@ -616,13 +844,17 @@
       switchTool(Tool.RAMP);
     else if (key === 't')
       switchTool(Tool.FENCE);
+    else if (key === 's')
+      switchTool(Tool.STAIRS);
   }
 
   const clearCanvas = () => {
     floors.forEach(floor => {
       floor.lines = [];
       floor.platforms = [];
+      floor.ramps = [];
       floor.fences = [];
+      floor.stairs = [];
     });
 
     drawGrid();
@@ -648,8 +880,11 @@
         floors = floorsData.map(floor => ({
           lines: floor.lines.map(line => new Line(line.x1, line.y1, line.x2, line.y2)),
           platforms: floor.platforms.map(platform => new Square(platform.x1, platform.y1, platform.x2 - platform.x1, platform.y4 - platform.y1)),
-          fences: floor.fences.map(fence => new Line(fence.x1, fence.y1, fence.x2, fence.y2))
+          fences: floor.fences.map(fence => new Line(fence.x1, fence.y1, fence.x2, fence.y2)),
+          ramps: floor.ramps.map(ramp => new Ramp(ramp.x1, ramp.y1, ramp.x2 - ramp.x1, ramp.y4 - ramp.y1, ramp.direction)),
+          stairs: floor.stairs.map(stair => new Stairs(stair.x1, stair.y1, stair.x2 - stair.x1, stair.y4 - stair.y1, stair.direction)),
         }));
+        updateFloorButtons();
         drawGrid();
       };
       reader.readAsText(file);
@@ -773,10 +1008,16 @@
     if (curTool != undefined)
       curTool.classList.add('active');
     
-    floors[activeFloor].lines.map(line => line.isHighlighted = false);
-    floors[activeFloor].platforms.map(line => line.isHighlighted = false);
+    deHighlightAll();
 
     return true;
+  }
+
+  function deHighlightAll() {
+    floors[activeFloor].lines.forEach(line => line.isHighlighted = false);
+    floors[activeFloor].platforms.forEach(platform => platform.isHighlighted = false);
+    floors[activeFloor].fences.forEach(fence => fence.isHighlighted = false);
+    floors[activeFloor].ramps.forEach(ramp => ramp.isHighlighted = false);
   }
 
   function getToolButton(toolId) {
@@ -788,13 +1029,15 @@
       return document.getElementById('ramp-tool');
     else if (toolId === Tool.FENCE)
       return document.getElementById('fence-tool');
+    else if (toolId === Tool.STAIRS)
+      return document.getElementById('stairs-tool');
   }
 
   function getLinesData() {
     return {
       'scale': exportUnit / gridSize,
       'floors': floors,
-      'height': wallHeight
+      'height': wallHeight,
     };
   }
 
