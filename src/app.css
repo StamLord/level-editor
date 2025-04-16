@@ -80,7 +80,7 @@ button:focus-visible {
 
 .grid-container {
   display: grid;
-  grid-template-columns: auto 1fr auto 1fr; /* Left div, canvas, right div */
+  grid-template-columns: 1fr 1fr 1fr; /* Left div, canvas, right div */
   width: 100%;
   align-items: center;
   gap: 50px;
@@ -119,29 +119,18 @@ button:focus-visible {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  /* background-color: rgba(255, 255, 255, 0.1); /* Light transparent */
-}
-
-.export-unit-container {
-  display: grid;
-  grid-template-rows: span;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
-}
-
-.export-unit-container #export-unit-input {
-  width: 50px;
 }
 
 .game-iframe {
   border: 2px solid white;
+  display: flex;
 }
 
 .switch-mode-button {
   background-color: #D32F2F;
   font-size: 125%;
   height: 12%;
+  margin-bottom: 1rem;
 }
 
 .playtest-toolbar {
@@ -166,23 +155,55 @@ button:focus-visible {
   background-color: #3a3a3a;
 }
 
-#player-settings {
+.settings-container {
   width: 100%;
   display: grid;
   grid-template-columns: auto;
   grid-template-rows: auto;
   gap: 10px;
+  max-width: 100%; /* prevents overflow */
 }
 
-#player-settings label {
+.settings-container label {
   grid-column: span 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap; /* or allow wrapping: white-space: normal; */
 }
 
-#player-settings input[type="number"] {
+.settings-container input[type="range"] {
+  margin: 10px;
+}
+
+.settings-container input[type="number"] {
   width: 50px;
+  margin: 10px;
 }
 
-#player-settings p {
-  margin: 0%;
-  height: 100%;
+.tabs {
+  display: flex;
+  /* gap: 1rem; */
+  /* border-bottom: 2px solid #ccc; */
+}
+
+.tabs button {
+  background: none;
+  border: 2px solid #ccc;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-weight: bold;
+  border-bottom-right-radius: 0%;
+  border-bottom-left-radius: 0%;
+}
+
+.tabs button.active {
+  border: 2px solid;
+  border-bottom: 0px;
+  border-color: #ccc;
+}
+
+.tab-content {
+  padding: 1rem 0;
+  border: 2px solid #ccc;
+  border-top: 0px;
 }

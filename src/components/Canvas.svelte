@@ -6,8 +6,6 @@
   on:change={importCanvas} 
 />
 
-
-<h1>Level Editor</h1>
 <div class="grid-container">
   <div class="side-panel left"></div>
   <div class="center-panel">
@@ -77,64 +75,11 @@
   </div>
   <div class="side-panel right">
     <button
-      class="switch-mode-button"
-      on:click={switchMode}>
+    class="switch-mode-button"
+    on:click={switchMode}>
       {switchModeBtnText}
     </button>
-    {#if mode === Mode.PLAYTEST}
-      <h3>Player Settings</h3>
-      <div id="player-settings">
-        <label for="player-height-slider">Height</label>
-        <input id="player-height-slider" 
-            type="range"
-            min="0.1"
-            max="20"
-            step="0.1"
-            bind:value={playerHeight}>
-        <input type="number" bind:value={playerHeight}>
-        <label for="player-radius-slider">Radius</label>
-        <input id="player-radius-slider" 
-            type="range"
-            min="0.1"
-            max="10"
-            step="0.1"
-            bind:value={playerRadius}>
-        <input type="number" bind:value={playerRadius}>
-        <label for="player-speed-slider">Speed</label>
-        <input id="player-speed-slider" 
-            type="range"
-            min="0"
-            max="20"
-            step="0.1"
-            bind:value={playerSpeed}>
-        <input type="number" bind:value={playerSpeed}>
-        <label for="player-sprint-speed-slider">Sprint Speed</label>
-        <input id="player-sprint-speed-slider" 
-            type="range"
-            min="0"
-            max="20"
-            step="0.1"
-            bind:value={playerSprintSpeed}>
-        <input type="number" bind:value={playerSprintSpeed}>
-        <label for="player-jump-velocity-slider">Jump Velocity</label>
-        <input id="player-jump-velocity-slider" 
-            type="range"
-            min="0"
-            max="20"
-            step="0.1"
-            bind:value={playerJumpVelocity}>
-        <input type="number" bind:value={playerJumpVelocity}>
-      </div>
-    {/if}
-    <label for="export-unit-slider">Engine Units</label>
-    <div class="export-unit-container">
-      <input id="export-unit-slider" 
-        type="range" min="1"
-        bind:value={exportUnit}/>
-      <input id ="export-unit-input" 
-        type="number" min="1"
-        bind:value={exportUnit}/>
-    </div>
+    <SettingsTabs />
     <button
       on:click={exportToTscn}>
       Export to Godot
@@ -146,6 +91,7 @@
 
 <script>
   import Tooltip from './Tooltip.svelte';
+  import SettingsTabs from './SettingsTabs.svelte';
 
   class Line {
     constructor(x1, y1, x2, y2) {
@@ -369,21 +315,14 @@
   let isDrawing = false;
   let gridSize = 25;
   let zoomFactor = 1;
-  let wallHeight = 4;
   
   let isPanning = false;
   let startX, startY;
   let offsetX = -2000;
   let offsetY = -2000;
 
-  let exportUnit = 1; // Will convert grid unit (25) into 1 meter in Godot
-
-  let playerHeight = 2;
-  let playerRadius = 0.3;
-  let playerSpeed = 5;
-  let playerSprintSpeed = 8;
-  let playerJumpVelocity = 4.5;
-
+  import { playerHeight, playerRadius, playerSpeed, playerSprintSpeed, playerJumpVelocity } from '../stores/user';
+  import { exportUnit, floorHeight } from '../stores/user';
   import { onMount } from 'svelte';
 
   onMount(() => {
@@ -564,7 +503,7 @@
     drawRamp(context, stair);
     context.save();
 
-    const lineAmount = wallHeight / 0.25; // Number of steps needed to get to next floor
+    const lineAmount = $floorHeight / 0.25; // Number of steps needed to get to next floor
     
     context.lineWidth = 0.5;
 
@@ -905,9 +844,9 @@
     let j = 0; // Floor number
     floors.forEach(floor => {
       floor.lines.forEach(line => {
-        const engineScale = exportUnit / gridSize;
+        const engineScale = $exportUnit / gridSize;
         const x = (line.x1 + line.x2) * 0.5 * engineScale;
-        const y = (wallHeight * j) + (wallHeight * 0.5);
+        const y = ($floorHeight * j) + ($floorHeight * 0.5);
         const z = (line.y1 + line.y2) * 0.5 * engineScale;
         const name = `wall_${i}`;
         
@@ -917,11 +856,11 @@
         // Sub resources
         let boxRandomId = Math.random().toString(36).substring(2, 7); // 5-char random ID
         sub_resources += `[sub_resource type="BoxShape3D" id="BoxShape3D_${boxRandomId}"]\n`;
-        sub_resources += `size = Vector3(${length}, ${wallHeight}, ${thickness})\n\n`;
+        sub_resources += `size = Vector3(${length}, ${floorHeight}, ${thickness})\n\n`;
 
         let quadRandomId = Math.random().toString(36).substring(2, 7); // 5-char random ID
         sub_resources += `[sub_resource type="QuadMesh" id="QuadMesh_${quadRandomId}"]\n`;
-        sub_resources += `size = Vector2(${length}, ${wallHeight})\n\n`;
+        sub_resources += `size = Vector2(${length}, ${floorHeight})\n\n`;
 
         // StaticBody3D
         nodes += `[node name="${name}" type="StaticBody3D" parent="."]\n`;
@@ -1035,19 +974,19 @@
 
   function getLinesData() {
     return {
-      'scale': exportUnit / gridSize,
+      'scale': $exportUnit / gridSize,
       'floors': floors,
-      'height': wallHeight,
+      'height': $floorHeight,
     };
   }
 
   function getPlayerData() {
     return {
-      'height': playerHeight,
-      'radius': playerRadius,
-      'speed': playerSpeed,
-      'sprint_speed': playerSprintSpeed,
-      'jump_velocity': playerJumpVelocity
+      'height': $playerHeight,
+      'radius': $playerRadius,
+      'speed': $playerSpeed,
+      'sprint_speed': $playerSprintSpeed,
+      'jump_velocity': $playerJumpVelocity
     };
   }
 
