@@ -33,5 +33,4 @@
 
     let active = Tab.LEVEL_SETTINGS;
 
-
 </script>

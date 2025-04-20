@@ -7,26 +7,28 @@
 />
 
 <div class="grid-container">
-  <div class="side-panel left"></div>
+  <div class="side-panel left">
+    <ToolInfo/>
+  </div>
   <div class="center-panel">
     <div class="canvas-toolbar">
       <div class="canvas-toolbar-left">
-        <Tooltip text="Not implemented">
-          <button class="tool-button">Q</button>
+        <Tooltip text="{tools[Tool.SELECT].name}">
+          <button id="select-tool" class="tool-button" on:click={() => {switchTool(Tool.SELECT)}}>Q</button>
         </Tooltip>
-        <Tooltip text="Draw / Delete walls">
+        <Tooltip text="{tools[Tool.WALL].name}">
           <button id="wall-tool" class="tool-button" on:click={() => {switchTool(Tool.WALL)}}>W</button>
         </Tooltip>
-        <Tooltip text="Draw / Delete platforms">
+        <Tooltip text="{tools[Tool.PLATFORM].name}">
           <button id="platform-tool" class="tool-button" on:click={() => {switchTool(Tool.PLATFORM)}}>E</button>
         </Tooltip>
-        <Tooltip text="Draw / Rotate / Delete ramps">
+        <Tooltip text="{tools[Tool.RAMP].name}">
           <button id="ramp-tool" class="tool-button" on:click={() => {switchTool(Tool.RAMP)}}>R</button>
         </Tooltip>
-        <Tooltip text="Draw / Delete fences">
+        <Tooltip text="{tools[Tool.FENCE].name}">
           <button id="fence-tool" class="tool-button" on:click={() => {switchTool(Tool.FENCE)}}>T</button>
         </Tooltip>
-        <Tooltip text="Draw / Delete stairs">
+        <Tooltip text="{tools[Tool.STAIRS].name}">
           <button id="stairs-tool" class="tool-button" on:click={() => {switchTool(Tool.STAIRS)}}>S</button>
         </Tooltip>
       </div>
@@ -91,15 +93,28 @@
 
 <script>
   import Tooltip from './Tooltip.svelte';
+  import ToolInfo from './ToolInfo.svelte';
+  import { tools } from '../data/tools.js'
   import SettingsTabs from './SettingsTabs.svelte';
 
-  class Line {
+  import { currentTool, playerHeight, playerRadius, playerSpeed, playerSprintSpeed, playerJumpVelocity } from '../stores/user';
+  import { exportUnit, floorHeight } from '../stores/user';
+  import { onMount } from 'svelte';
+
+  class BaseData {
+    constructor() {
+      this.isHighlighted = false;
+      this.isSelected = false;
+    }
+  }
+
+  class Line extends BaseData {
     constructor(x1, y1, x2, y2) {
+      super();
       this.x1 = x1;
       this.y1 = y1;
       this.x2 = x2;
       this.y2 = y2;
-      this.isHighlighted = false;
     }
 
     move(x, y) {
@@ -145,9 +160,10 @@
     }
   }
 
-  class Square {
+  class Square extends BaseData {
     // Get start and end points and imply the rest
     constructor(x, y, width, height) {
+      super();
       this.x1 = x;
       this.y1 = y;
 
@@ -159,8 +175,6 @@
       
       this.x4 = this.x1 + width;
       this.y4 = this.y1 + height;
-
-      this.isHighlighted = false;
     }
 
     getWidth() {
@@ -275,6 +289,65 @@
     }
   }
 
+  class Selection {
+    constructor(x1, y1, x4, y4) {
+      this.x1 = x1;
+      this.y1 = y1;
+
+      this.x4 = x4;
+      this.y4 = y4;
+
+      this.x2 = this.x4;
+      this.y2 = this.y1;
+
+      this.x3 = this.x1;
+      this.y3 = this.y4;
+    }
+
+    move(x, y) {
+      this.x1 += x;
+      this.x2 += x;
+      this.x3 += x;
+      this.x4 += x;
+
+      this.y1 += y;
+      this.y2 += y;
+      this.y3 += y;
+      this.y4 += y;
+    }
+
+    getWidth() {
+      return this.x2 - this.x1;
+    }
+
+    getHeight() {
+      return this.y4 - this.y1;
+    }
+
+    updateCorner(x4, y4) {
+      this.x4 = x4;
+      this.y4 = y4;
+
+      this.x2 = this.x4;
+      this.y3 = this.y4;
+    }
+
+    isPointInside(x, y) {
+      const checkX = x > this.x1 && x < this.x2 || x < this.x1 && x > this.x2;
+      const checkY = y > this.y1 && y < this.y4 || y < this.y1 && y > this.y4;
+      return checkX && checkY;
+    }
+
+    isObjectInside(object) {
+      if (object instanceof Line)
+        return this.isPointInside(object.x1, object.y1) || this.isPointInside(object.x2, object.y2) 
+      else if (object instanceof Square)
+        return this.isPointInside(object.x1, object.y1) || this.isPointInside(object.x2, object.y2) || this.isPointInside(object.x3, object.y3) || this.isPointInside(object.x4, object.y4); 
+    }
+  }
+
+  const selectionColor = '#3399FF80';
+  const passiveSelectionColor = '#3399FF';
   const lineHighlightColor = '#ff0000';
   const lineColor = '#ffffff';
   const platformColor = '#3f3f3f';
@@ -290,7 +363,7 @@
   let mode = Mode.EDITOR;
 
   const Tool = {
-    MOVE: 0,
+    SELECT: 0,
     WALL: 1,
     PLATFORM: 2,
     RAMP: 3,
@@ -298,7 +371,9 @@
     STAIRS: 5,
   }
 
-  let tool = Tool.WALL; 
+  let tool = Tool.SELECT; 
+  $: tool = $currentTool;
+  $: currentTool.set(tool);
 
   let canvas;
   let ctx;
@@ -321,9 +396,24 @@
   let offsetX = -2000;
   let offsetY = -2000;
 
-  import { playerHeight, playerRadius, playerSpeed, playerSprintSpeed, playerJumpVelocity } from '../stores/user';
-  import { exportUnit, floorHeight } from '../stores/user';
-  import { onMount } from 'svelte';
+  const SelectionState = {
+    NONE: 0,
+    ACTIVE: 1,
+    PASSIVE: 2,
+    MOVING: 3
+  }
+
+  let selectionState = SelectionState.NONE;
+  let selectionRect = new Selection(-100, -100);
+  let selectionData = {
+      lines: [],
+      platforms: [],
+      ramps: [],
+      fences: [],
+      stairs: [],
+    };
+  let moveSelectionStartX;
+  let moveSelectionStartY;
 
   onMount(() => {
     if (canvas) {
@@ -389,36 +479,56 @@
       // Draw platforms
       const pColor = setHexAlpha(platformColor, alpha * 0.5); // Platforms start with 0.5 opacity
       floor.platforms.forEach(platform => {
-        ctx.fillStyle = platform.isHighlighted? platformHighlightColor : pColor;
+        ctx.fillStyle = platform.isSelected? selectionColor : platform.isHighlighted? platformHighlightColor : pColor;
         ctx.fillRect(platform.x1, platform.y1, platform.getWidth(), platform.getHeight());
       });
       
       // Draw ramps
       const rColor = setHexAlpha(rampColor, alpha * 0.5); // Platforms start with 0.5 opacity
       floor.ramps.forEach(ramp => {
-        ctx.fillStyle = ramp.isHighlighted? rampHighlightColor : rColor;
+        ctx.fillStyle = ramp.isSelected? selectionColor : ramp.isHighlighted? rampHighlightColor : rColor;
         drawRamp(ctx, ramp);
       });
 
       // Draw lines
       const lColor = setHexAlpha(lineColor, alpha);
       floor.lines.forEach(line => {
-        drawLine(ctx, line, line.isHighlighted? 4 : 2, line.isHighlighted? lineHighlightColor : lColor);});
+        drawLine(ctx, line, line.isHighlighted? 4 : 2, line.isSelected? selectionColor : line.isHighlighted? lineHighlightColor : lColor);});
 
       // Draw fences
       ctx.setLineDash([10, 5]); 
       const fColor = setHexAlpha(lineColor, alpha);
       floor.fences.forEach(fence => {
-        drawLine(ctx, fence, fence.isHighlighted? 4 : 2, fence.isHighlighted? lineHighlightColor :fColor);});
+        drawLine(ctx, fence, fence.isHighlighted? 4 : 2, fence.isSelected? selectionColor : fence.isHighlighted? lineHighlightColor :fColor);});
       
       ctx.setLineDash([]);
 
       // Draw stairs
       const sColor = setHexAlpha(rampColor, alpha * 0.5); // Platforms start with 0.5 opacity
       floor.stairs.forEach(stair => {
-        ctx.fillStyle = stair.isHighlighted? rampHighlightColor : sColor;
+        ctx.fillStyle = stair.isSelected? selectionColor : stair.isHighlighted? rampHighlightColor : sColor;
         drawStairs(ctx, stair);
       });
+
+      // Draw Selection
+      if (selectionState !== SelectionState.NONE) {
+        ctx.save();
+        ctx.beginPath();
+        if (selectionState === SelectionState.ACTIVE) {
+          ctx.fillStyle = selectionColor;
+          ctx.setLineDash([]); 
+          ctx.fillRect(selectionRect.x1, selectionRect.y1, selectionRect.getWidth(), selectionRect.getHeight());
+        }
+        else {
+          ctx.strokeStyle = passiveSelectionColor;
+          ctx.lineWidth = 2;
+          ctx.setLineDash([10, 5]); 
+          ctx.rect(selectionRect.x1, selectionRect.y1, selectionRect.getWidth(), selectionRect.getHeight());
+        }
+
+        ctx.stroke();
+        ctx.restore();
+      }
 
       i++;
     });
@@ -617,7 +727,25 @@
       const y = getSnapped(mousePos.y);
       isDrawing = true;
 
-      if (tool === Tool.WALL)
+      if (tool === Tool.SELECT) {
+        if (selectionState === SelectionState.NONE) {
+          selectionRect = new Selection(mousePos.x, mousePos.y, mousePos.x, mousePos.y);
+          selectionState = SelectionState.ACTIVE;
+        }
+        else {
+          const isInsideSelection = selectionRect.isPointInside(x, y);
+          if (isInsideSelection) {
+            moveSelectionStartX = x;
+            moveSelectionStartY = y;
+            selectionState = SelectionState.MOVING;
+          } else {
+            selectionRect = new Selection(mousePos.x, mousePos.y, mousePos.x, mousePos.y);
+            clearSelectionData();
+            selectionState = SelectionState.ACTIVE;
+          }
+        }
+      }
+      else if (tool === Tool.WALL)
         floors[activeFloor].lines.push(new Line(x, y, x, y));
       else if (tool === Tool.PLATFORM)
         floors[activeFloor].platforms.push(new Square(x, y, 0, 0));
@@ -669,7 +797,12 @@
       const x = getSnapped(mousePos.x);
       const y = getSnapped(mousePos.y);
       
-      if (tool === Tool.WALL) {
+      if (tool === Tool.SELECT) {
+        if (selectionState === SelectionState.MOVING)
+          moveSelectionData(x, y);
+        else if (selectionState === SelectionState.ACTIVE)
+          selectionRect.updateCorner(mousePos.x, mousePos.y);
+      } else if (tool === Tool.WALL) {
         const lines = floors[activeFloor].lines;
         lines[lines.length - 1].x2 = x;
         lines[lines.length - 1].y2 = y;
@@ -717,6 +850,23 @@
   const handleMouseUp = (event) => {
     if (event.button === 0) {
       isDrawing = false;
+      
+      if (tool === Tool.SELECT) {
+        if (selectionState === SelectionState.MOVING)
+          selectionState = SelectionState.PASSIVE;
+        else if(selectionState === SelectionState.ACTIVE) {
+          getSelectionData();
+          
+          if (isSelectionDataEmpty())
+            selectionState = SelectionState.NONE;
+          else
+            selectionState = SelectionState.PASSIVE;
+        }
+
+        drawGrid();
+      }
+
+      // TODO: Refactor 'fixes' per tool
       const lines = floors[activeFloor].lines;
       if (lines.length > 0 && lines[lines.length - 1].isPoint())
         lines.pop();
@@ -737,6 +887,14 @@
 
     } else if (event.button === 1) {
       isPanning = false;
+    } else if (event.button === 2) {
+      if (tool === Tool.SELECT) {
+        if (selectionState !== SelectionState.NONE) {
+          selectionState = SelectionState.NONE;
+          clearSelectionData();
+          drawGrid();
+        }
+      }
     }
   };
 
@@ -775,6 +933,8 @@
     }
 
     // q,w,e,r switch tools
+    else if (key === 'q')
+      switchTool(Tool.SELECT);
     else if (key === 'w')
       switchTool(Tool.WALL);
     else if (key === 'e')
@@ -948,6 +1108,7 @@
       curTool.classList.add('active');
     
     deHighlightAll();
+    drawGrid();
 
     return true;
   }
@@ -957,10 +1118,13 @@
     floors[activeFloor].platforms.forEach(platform => platform.isHighlighted = false);
     floors[activeFloor].fences.forEach(fence => fence.isHighlighted = false);
     floors[activeFloor].ramps.forEach(ramp => ramp.isHighlighted = false);
+    floors[activeFloor].stairs.forEach(stair => stair.isHighlighted = false);
   }
 
   function getToolButton(toolId) {
-    if (toolId === Tool.WALL)
+    if (toolId === Tool.SELECT)
+      return document.getElementById('select-tool');
+    else if (toolId === Tool.WALL)
       return document.getElementById('wall-tool');
     else if (toolId === Tool.PLATFORM)
       return document.getElementById('platform-tool');
@@ -1024,6 +1188,63 @@
       if (canvas.requestPointerLock) {
           canvas.requestPointerLock();
       }
+  }
+
+  function getSelectionData() {
+    if (selectionRect === null) return;
+    
+    markSelectedObjects(false);
+
+    selectionData.lines = floors[activeFloor].lines.filter(l => selectionRect.isObjectInside(l));
+    selectionData.platforms = floors[activeFloor].platforms.filter(p => selectionRect.isObjectInside(p));
+    selectionData.ramps = floors[activeFloor].ramps.filter(r => selectionRect.isObjectInside(r));
+    selectionData.fences = floors[activeFloor].fences.filter(f => selectionRect.isObjectInside(f));
+    selectionData.stairs = floors[activeFloor].stairs.filter(s => selectionRect.isObjectInside(s));
+    
+    markSelectedObjects();
+  }
+
+  function isSelectionDataEmpty() {
+    return selectionData.lines.length < 1 && selectionData.platforms.length < 1
+        && selectionData.ramps.length < 1 && selectionData.fences.length < 1 && selectionData.stairs.length < 1;
+  }
+
+  function markSelectedObjects(isSelected = true) {
+    selectionData.lines.forEach(x => x.isSelected = isSelected);
+    selectionData.platforms.forEach(x => x.isSelected = isSelected);
+    selectionData.ramps.forEach(x => x.isSelected = isSelected);
+    selectionData.fences.forEach(x => x.isSelected = isSelected);
+    selectionData.stairs.forEach(x => x.isSelected = isSelected);
+  }
+
+  function resetSelectionData() {
+    selectionData = {
+      lines: [],
+      platforms: [],
+      ramps: [],
+      fences: [],
+      stairs: [],
+    }
+  }
+
+  function clearSelectionData() {
+    markSelectedObjects(false);
+    resetSelectionData();
+  }
+
+  function moveSelectionData(x, y) {
+    const deltaX = x - moveSelectionStartX;
+    const deltaY = y - moveSelectionStartY;
+
+    selectionData.lines.forEach(x => x.move(deltaX, deltaY));
+    selectionData.platforms.forEach(x => x.move(deltaX, deltaY));
+    selectionData.ramps.forEach(x => x.move(deltaX, deltaY));
+    selectionData.fences.forEach(x => x.move(deltaX, deltaY));
+    selectionData.stairs.forEach(x => x.move(deltaX, deltaY));
+
+    selectionRect.move(deltaX, deltaY);
+    moveSelectionStartX = x;
+    moveSelectionStartY = y;
   }
 
   $: gridSize, zoomFactor, drawGrid();

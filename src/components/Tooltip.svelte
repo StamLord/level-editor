@@ -22,6 +22,8 @@
     }
 
     .tooltip {
+        display: flex;
+        align-items: center;
         position: absolute;
         bottom: 120%;
         left: 50%;

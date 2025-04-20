@@ -24,10 +24,20 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+}
+
+#app {
+  margin: 0 auto;
+  text-align: center;
+}
+
+main {
+  display: flex;
+  margin: 0 auto;
+  max-width: 1280px;
+  padding: 2rem;
 }
 
 h1 {
@@ -37,13 +47,6 @@ h1 {
 
 .card {
   padding: 2em;
-}
-
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
 }
 
 button {
@@ -60,6 +63,7 @@ button {
 button:hover {
   border-color: #646cff;
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
@@ -81,8 +85,8 @@ button:focus-visible {
 .grid-container {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr; /* Left div, canvas, right div */
-  width: 100%;
   align-items: center;
+  justify-items: center;
   gap: 50px;
 }
 
@@ -206,4 +210,44 @@ button:focus-visible {
   padding: 1rem 0;
   border: 2px solid #ccc;
   border-top: 0px;
+}
+
+.mouse-icon {
+  overflow: hidden;
+  position: relative;
+  width: 40px;
+  height: 60px;
+  background: #3a3a3a;
+  border: 2px solid #ccc;
+  border-radius: 20px;
+  box-sizing: border-box;
+}
+
+/* Common button styling */
+.mouse-icon .button {
+  position: absolute;
+  width: 50%;
+  height: 50%;
+  top: -10%;
+  background: #3a3a3a;
+  box-sizing: border-box;
+}
+
+/* Left vs Right button positioning */
+.mouse-icon .button.left  { left: 0%;  }
+.mouse-icon .button.right { right: 0%; }
+
+.mouse-icon .button.active { background-color: #ccc; }
+
+/* Scroll wheel (middle click) */
+.mouse-icon .wheel {
+  position: absolute;
+  width: 6px;
+  height: 10px;
+  top: 7%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #3a3a3a;
+  border: 2px solid #ccc;
+  border-radius: 3px;
 }

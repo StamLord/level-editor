@@ -1,17 +1,14 @@
 <script>
   import svelteLogo from '../assets/svelte.svg'
   import viteLogo from '/vite.svg'
-  import Counter from '../lib/Counter.svelte'
+  import Header from './Header.svelte';
   import Canvas from './Canvas.svelte'
   import Game from './Game.svelte';
 </script>
 
+<Header/>
 <main>
-  <h1>Level Editor</h1>
-  <Canvas />  <!-- Use Canvas component here -->
-
-  <!-- <h1>Play</h1>
-  <Game /> -->
+  <Canvas />
 </main>
 
 <style>
