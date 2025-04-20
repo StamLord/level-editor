@@ -1,11 +1,16 @@
 :root {
+  --bg-color: #1f1f1f;
+  --text-color: #e0e0e0;
+  --accent-color: #646cff;
+  --button-bg: #121212;
+  --button-hover: #333333;
+
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: var(--text-color);
+  background-color: var(--bg-color);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -15,7 +20,7 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: var(--accent-color);
   text-decoration: inherit;
 }
 a:hover {
@@ -52,16 +57,17 @@ h1 {
 button {
   border-radius: 8px;
   border: 1px solid transparent;
+  color: var(--text-color);
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--button-bg);
   cursor: pointer;
   transition: border-color 0.25s;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: var(--accent-color);
 }
 
 button:focus,
@@ -144,19 +150,20 @@ button:focus-visible {
 }
 
 .tool-button {
-  background-color: #1a1a1a;
+  background-color: var(--button-bg);
 }
 
 .tool-button.active {
-  background-color: #3a3a3a;
+  background-color: var(--accent-color);
 }
 
 .floor-button {
-  background-color: #1a1a1a;
+  background-color: var(--button-bg);
 }
 
 .floor-button.active {
-  background-color: #3a3a3a;
+  background-color: var(--accent-color);
+
 }
 
 .settings-container {

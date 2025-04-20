@@ -47,24 +47,24 @@
         </button>
       </div>
     </div>
-    <!-- Level Editor -->
-    <div style="width: 800px; height: 600px; overflow:hidden; position: relative; border: 2px solid white; display: {mode === Mode.EDITOR ? 'grid' : 'none'};">
-      <div id="canvas-floors">
-        <button on:click={addFloor}> + </button>
-        <button class="floor-button"> 1 </button>
+    <div style="width: 800px; height: 600px; overflow:hidden; position: relative; border: 2px solid var(--text-color);">
+      <!-- Level Editor -->
+      <div class="canvas-container" style="display: {mode === Mode.EDITOR ? 'grid' : 'none'};">
+        <div id="canvas-floors">
+          <button on:click={addFloor}> + </button>
+          <button class="floor-button"> 1 </button>
+        </div>
+        <canvas bind:this={canvas} width="4000" height="4000" 
+            on:mousedown={handleMouseDown} 
+            on:mousemove={handleMouseMove} 
+            on:mouseup={handleMouseUp} 
+            on:wheel={handleMouseWheel}
+            on:contextmenu={handleContextMenu}
+            style="border: 1px solid black; position: relative; z-index: 10;">
+        </canvas>
       </div>
-      <canvas bind:this={canvas} width="4000" height="4000" 
-          on:mousedown={handleMouseDown} 
-          on:mousemove={handleMouseMove} 
-          on:mouseup={handleMouseUp} 
-          on:wheel={handleMouseWheel}
-          on:contextmenu={handleContextMenu}
-          style="border: 1px solid black; position: relative; z-index: 10;">
-      </canvas>
-    </div>
-    <!-- Playtest -->
-    <div style= "display: {mode === Mode.PLAYTEST ? 'block' : 'none'}">
-      <div id="playtest-container">
+      <!-- Playtest -->
+      <div style= "display: {mode === Mode.PLAYTEST ? 'block' : 'none'}">
         <iframe id="game-iframe"
             title="Playtest"
             width="800"
@@ -73,7 +73,6 @@
         </iframe>
       </div>
     </div>
-
   </div>
   <div class="side-panel right">
     <button
@@ -485,8 +484,10 @@
       
       // Draw ramps
       const rColor = setHexAlpha(rampColor, alpha * 0.5); // Platforms start with 0.5 opacity
+      const rArrowColor = setHexAlpha(rampColor, alpha);
       floor.ramps.forEach(ramp => {
         ctx.fillStyle = ramp.isSelected? selectionColor : ramp.isHighlighted? rampHighlightColor : rColor;
+        ctx.strokeStyle = ramp.isSelected? selectionColor : ramp.isHighlighted? rampHighlightColor : rArrowColor;
         drawRamp(ctx, ramp);
       });
 
@@ -554,59 +555,59 @@
 
     context.fillRect(ramp.x1, ramp.y1, ramp.getWidth(), ramp.getHeight());
 
-      // Draw arrow
-      const center = ramp.getCenter();
-      const margins = ramp.getLength() * 0.25; // 50% of the length, divided by 2 to account for offest from center
-      const arrowHeadHeight = margins * 0.5;
-      const arrowHeadWidth = margins * 0.5;
-      
-      let direction = ramp.direction;
-      
-      if (ramp.isInvertedVertically()) {
-        if (direction === Ramp.Direction.UP)
-          direction = Ramp.Direction.DOWN;
-        else if (direction === Ramp.Direction.DOWN)
-          direction = Ramp.Direction.UP;
-      }
-      
-      if (ramp.isInvertedVertically()) {
-        if (direction === Ramp.Direction.RIGHT)
-          direction = Ramp.Direction.LEFT;
-        else if (direction === Ramp.Direction.LEFT)
-          direction = Ramp.Direction.RIGHT;
-      }
+    // Draw arrow
+    const center = ramp.getCenter();
+    const margins = ramp.getLength() * 0.25; // 50% of the length, divided by 2 to account for offest from center
+    const arrowHeadHeight = margins * 0.5;
+    const arrowHeadWidth = margins * 0.5;
+    
+    let direction = ramp.direction;
+    
+    if (ramp.isInvertedVertically()) {
+      if (direction === Ramp.Direction.UP)
+        direction = Ramp.Direction.DOWN;
+      else if (direction === Ramp.Direction.DOWN)
+        direction = Ramp.Direction.UP;
+    }
+    
+    if (ramp.isInvertedVertically()) {
+      if (direction === Ramp.Direction.RIGHT)
+        direction = Ramp.Direction.LEFT;
+      else if (direction === Ramp.Direction.LEFT)
+        direction = Ramp.Direction.RIGHT;
+    }
 
-      if (direction === Ramp.Direction.UP || direction === Ramp.Direction.DOWN) {
-        // Vertical Line
-        context.beginPath();
-        context.moveTo(center.x, center.y - margins);
-        context.lineTo(center.x, center.y + margins);
-        
-        // Arrow Head
-        const arrowEnd = direction === Ramp.Direction.DOWN? arrowHeadHeight : -arrowHeadHeight;
-        const arrowTip = direction === Ramp.Direction.DOWN? margins : -margins;
-        context.moveTo(center.x, center.y + arrowTip);
-        context.lineTo(center.x - arrowHeadWidth, center.y + arrowEnd);
-        context.moveTo(center.x, center.y + arrowTip);
-        context.lineTo(center.x + arrowHeadWidth, center.y + arrowEnd);
-      } else {
-        // Horizontal line
-        context.beginPath();
-        context.moveTo(center.x - margins, center.y);
-        context.lineTo(center.x + margins, center.y);
+    if (direction === Ramp.Direction.UP || direction === Ramp.Direction.DOWN) {
+      // Vertical Line
+      context.beginPath();
+      context.moveTo(center.x, center.y - margins);
+      context.lineTo(center.x, center.y + margins);
+      
+      // Arrow Head
+      const arrowEnd = direction === Ramp.Direction.DOWN? arrowHeadHeight : -arrowHeadHeight;
+      const arrowTip = direction === Ramp.Direction.DOWN? margins : -margins;
+      context.moveTo(center.x, center.y + arrowTip);
+      context.lineTo(center.x - arrowHeadWidth, center.y + arrowEnd);
+      context.moveTo(center.x, center.y + arrowTip);
+      context.lineTo(center.x + arrowHeadWidth, center.y + arrowEnd);
+    } else {
+      // Horizontal line
+      context.beginPath();
+      context.moveTo(center.x - margins, center.y);
+      context.lineTo(center.x + margins, center.y);
 
-        // Arrow Head
-        const xOffest = direction === Ramp.Direction.RIGHT? arrowHeadHeight : -arrowHeadHeight;
-        const xStart = direction === Ramp.Direction.RIGHT? margins : -margins;
-        context.moveTo(center.x + xStart, center.y);
-        context.lineTo(center.x + xOffest, center.y + arrowHeadWidth);
-        context.moveTo(center.x + xStart, center.y);
-        context.lineTo(center.x + xOffest, center.y - arrowHeadWidth);
-      }
+      // Arrow Head
+      const xOffest = direction === Ramp.Direction.RIGHT? arrowHeadHeight : -arrowHeadHeight;
+      const xStart = direction === Ramp.Direction.RIGHT? margins : -margins;
+      context.moveTo(center.x + xStart, center.y);
+      context.lineTo(center.x + xOffest, center.y + arrowHeadWidth);
+      context.moveTo(center.x + xStart, center.y);
+      context.lineTo(center.x + xOffest, center.y - arrowHeadWidth);
+    }
 
-      context.lineWidth = 4;
-      context.stroke();
-      context.restore();
+    context.lineWidth = 4;
+    context.stroke();
+    context.restore();
   }
 
   function drawStairs(context, stair) {
