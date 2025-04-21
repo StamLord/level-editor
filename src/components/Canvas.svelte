@@ -348,9 +348,9 @@
 
     isObjectInside(object) {
       if (object instanceof Line)
-        return this.isPointInside(object.x1, object.y1) || this.isPointInside(object.x2, object.y2) 
+        return this.isPointInside(object.x1, object.y1) && this.isPointInside(object.x2, object.y2) 
       else if (object instanceof Square)
-        return this.isPointInside(object.x1, object.y1) || this.isPointInside(object.x2, object.y2) || this.isPointInside(object.x3, object.y3) || this.isPointInside(object.x4, object.y4); 
+        return this.isPointInside(object.x1, object.y1) && this.isPointInside(object.x2, object.y2) && this.isPointInside(object.x3, object.y3) && this.isPointInside(object.x4, object.y4); 
     }
   }
 
