@@ -73,6 +73,18 @@
         </iframe>
       </div>
     </div>
+    <div class="exports-container">
+      <button class="export-button" disabled>
+        Export to Unreal
+      </button>
+      <button class="export-button"
+        on:click={exportToTscn}>
+        Export to Godot
+      </button>
+      <button class="export-button" disabled>
+        Export to Unity
+      </button>
+    </div>
   </div>
   <div class="side-panel right">
     <button
@@ -81,10 +93,7 @@
       {switchModeBtnText}
     </button>
     <SettingsTabs />
-    <button
-      on:click={exportToTscn}>
-      Export to Godot
-    </button>
+
   </div>
 </div>
 

@@ -75,6 +75,12 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+button:disabled {
+  color: var(--button-hover);
+  border: 1px solid transparent;
+  cursor: default;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -217,6 +223,18 @@ button:focus-visible {
   padding: 1rem 0;
   border: 2px solid #ccc;
   border-top: 0px;
+}
+
+.exports-container {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin-top: 2rem;
+}
+
+.export-button {
+  padding: 1rem;
+  flex: 1;
 }
 
 .mouse-icon {
