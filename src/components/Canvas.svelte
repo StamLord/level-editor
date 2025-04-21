@@ -90,8 +90,14 @@
     <button
     class="switch-mode-button"
     on:click={switchMode}>
-      {switchModeBtnText}
+      {#if mode === Mode.EDITOR}
+        <div class="play-icon"></div>
+      {:else}
+        <div class="pause-icon"></div>
+      {/if}
+      <!-- {switchModeBtnText} -->
     </button>
+   
     <SettingsTabs />
 
   </div>

@@ -1,9 +1,10 @@
 :root {
-  --bg-color: #1f1f1f;
+  --bg-color: #1d1d1d;
   --text-color: #e0e0e0;
   --accent-color: #646cff;
   --button-bg: #121212;
   --button-hover: #333333;
+  --panel-color: #282828;
 
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -144,9 +145,52 @@ button:disabled {
 
 .switch-mode-button {
   background-color: #D32F2F;
+  border: 0px;
+  box-shadow: 0px 9px #7c1111;
   font-size: 125%;
   height: 12%;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+
+.switch-mode-button:hover {
+  background-color: #f14545;
+  border: 0px;
+}
+
+.switch-mode-button:active {
+  background-color: #f14545;
+  border: 0px;
+  box-shadow: 0px 0px #7c1111;
+  transform: translateY(9px);
+}
+
+.play-icon {
+  width: 0;
+  height: 0;
+  border-top: 20px solid transparent;
+  border-bottom: 20px solid transparent;
+  border-left: 30px solid var(--text-color);
+  cursor: pointer;
+  margin: auto;
+}
+
+.pause-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+}
+
+.pause-icon::before,
+.pause-icon::after {
+  content: "";
+  width: 10px;
+  height: 100%;
+  background-color: var(--text-color);
+  border-radius: 2px;
 }
 
 .playtest-toolbar {
@@ -195,34 +239,6 @@ button:disabled {
 .settings-container input[type="number"] {
   width: 50px;
   margin: 10px;
-}
-
-.tabs {
-  display: flex;
-  /* gap: 1rem; */
-  /* border-bottom: 2px solid #ccc; */
-}
-
-.tabs button {
-  background: none;
-  border: 2px solid #ccc;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  font-weight: bold;
-  border-bottom-right-radius: 0%;
-  border-bottom-left-radius: 0%;
-}
-
-.tabs button.active {
-  border: 2px solid;
-  border-bottom: 0px;
-  border-color: #ccc;
-}
-
-.tab-content {
-  padding: 1rem 0;
-  border: 2px solid #ccc;
-  border-top: 0px;
 }
 
 .exports-container {
