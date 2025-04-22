@@ -6,7 +6,10 @@
   --button-hover: #333333;
   --panel-color: #282828;
   --red-color: #D32F2F;
+  --red-hover-color: #f14545;
+  --red-shadow-color: #7c1111;
   --divider-color: #333;
+  --mouse-icon-bg: #3a3a3a;
 
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -141,28 +144,28 @@ button:disabled {
 }
 
 .game-iframe {
-  border: 2px solid white;
+  border: 2px solid var(--text-color);
   display: flex;
 }
 
 .switch-mode-button {
-  background-color: #D32F2F;
+  background-color: var(--red-color);
   border: 0px;
-  box-shadow: 0px 9px #7c1111;
+  box-shadow: 0px 9px var(--red-shadow-color);
   font-size: 125%;
   height: 12%;
   margin-bottom: 2rem;
 }
 
 .switch-mode-button:hover {
-  background-color: #f14545;
+  background-color: var(--red-hover-color);
   border: 0px;
 }
 
 .switch-mode-button:active {
-  background-color: #f14545;
+  background-color: var(--red-hover-color);
   border: 0px;
-  box-shadow: 0px 0px #7c1111;
+  box-shadow: 0px 0px var(--red-shadow-color);
   transform: translateY(9px);
 }
 
@@ -260,8 +263,8 @@ button:disabled {
   position: relative;
   width: 40px;
   height: 60px;
-  background: #3a3a3a;
-  border: 2px solid #ccc;
+  background: var(--mouse-icon-bg);
+  border: 2px solid var(--text-color);
   border-radius: 20px;
   box-sizing: border-box;
 }
@@ -272,7 +275,7 @@ button:disabled {
   width: 50%;
   height: 50%;
   top: -10%;
-  background: #3a3a3a;
+  background: var(--mouse-icon-bg);
   box-sizing: border-box;
 }
 
@@ -280,7 +283,7 @@ button:disabled {
 .mouse-icon .button.left  { left: 0%;  }
 .mouse-icon .button.right { right: 0%; }
 
-.mouse-icon .button.active { background-color: #ccc; }
+.mouse-icon .button.active { background-color: var(--text-color); }
 
 /* Scroll wheel (middle click) */
 .mouse-icon .wheel {
@@ -290,7 +293,7 @@ button:disabled {
   top: 7%;
   left: 50%;
   transform: translateX(-50%);
-  background: #3a3a3a;
-  border: 2px solid #ccc;
+  background: var(--mouse-icon-bg);
+  border: 2px solid var(--text-color);
   border-radius: 3px;
 }

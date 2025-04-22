@@ -36,7 +36,7 @@
 
     h3 {
         padding-bottom:1rem; 
-        border-bottom: 2px solid #ccc;
+        border-bottom: 2px solid var(--divider-color);
     }
 
     row {
