@@ -103,8 +103,6 @@
   </div>
 </div>
 
-
-
 <script>
   import Tooltip from './Tooltip.svelte';
   import ToolInfo from './ToolInfo.svelte';
@@ -1098,9 +1096,6 @@
   let switchModeBtnText = "Playtest";
   
   function playtest() {
-    console.log("Clicked playtest")
-    sendRequest();
-    sendRequest();
     mode = 1;
     switchModeBtnText = "To Editor";
   }
@@ -1168,28 +1163,6 @@
       'sprint_speed': $playerSprintSpeed,
       'jump_velocity': $playerJumpVelocity
     };
-  }
-
-  async function sendRequest() {
-    try {
-      const response = await fetch('http://localhost:8080/level', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        mode: "cors",
-        body: JSON.stringify(getLinesData()) // Send data as JSON
-      });
-
-      // Handle the response
-      if (response.ok) {
-        console.log(`Success: ${response.status}`);
-      } else {
-        console.log(`Error: ${response.status}`);
-      }
-    } catch (error) {
-      console.log(`Request failed: ${error.message}`);
-    }
   }
 
   function triggerFileImport() {
