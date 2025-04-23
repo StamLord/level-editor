@@ -91,7 +91,7 @@ button:disabled {
   grid-template-columns: 1fr 1fr 1fr; /* Left div, canvas, right div */
   align-items: center;
   justify-items: center;
-  gap: 50px;
+  gap: 100px;
 }
 
 .canvas-toolbar {
@@ -125,6 +125,7 @@ button:disabled {
 
 .side-panel {
   height: 100%;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
