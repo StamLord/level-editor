@@ -481,12 +481,12 @@
     floors.forEach(floor => {
       // Reduce alpha below us by 50% for every floor
       const floorDelta = activeFloor - i;
-      let alpha = 1;
+      let alpha = 1.0;
 
       if (floorDelta > 0)
         alpha = Math.pow(0.5, floorDelta);
       else if (floorDelta < 0)
-        alpha = 0; // Drawing above us are invisible
+        alpha = 0.0; // Drawing above us are invisible
       
       // Draw platforms
       const pColor = setHexAlpha(platformColor, alpha * 0.5); // Platforms start with 0.5 opacity
@@ -497,11 +497,12 @@
       
       // Draw ramps
       const rColor = setHexAlpha(rampColor, alpha * 0.5); // Platforms start with 0.5 opacity
-      const rArrowColor = setHexAlpha(rampColor, alpha);
+      const rArrowColor = setHexAlpha(rampColor, alpha * 1.1); // TODO: Switch to rgba() to avoid alpha bugs. '* 1.1' needed for correct value
+
       floor.ramps.forEach(ramp => {
-        ctx.fillStyle = ramp.isSelected? selectionColor : ramp.isHighlighted? rampHighlightColor : rColor;
-        ctx.strokeStyle = ramp.isSelected? selectionColor : ramp.isHighlighted? rampHighlightColor : rArrowColor;
-        drawRamp(ctx, ramp);
+        let fillStyle = ramp.isSelected? selectionColor : ramp.isHighlighted? rampHighlightColor : rColor;
+        let strokeStyle = ramp.isSelected? selectionColor : ramp.isHighlighted? rampHighlightColor : rArrowColor;
+        drawRamp(ctx, ramp, fillStyle, strokeStyle);
       });
 
       // Draw lines
@@ -520,8 +521,9 @@
       // Draw stairs
       const sColor = setHexAlpha(rampColor, alpha * 0.5); // Platforms start with 0.5 opacity
       floor.stairs.forEach(stair => {
-        ctx.fillStyle = stair.isSelected? selectionColor : stair.isHighlighted? rampHighlightColor : sColor;
-        drawStairs(ctx, stair);
+        let fillStyle = stair.isSelected? selectionColor : stair.isHighlighted? rampHighlightColor : sColor;
+        let strokeStyle = stair.isSelected? selectionColor : stair.isHighlighted? rampHighlightColor : rArrowColor;
+        drawStairs(ctx, stair, fillStyle, strokeStyle);
       });
 
       // Draw Selection
@@ -563,9 +565,10 @@
     context.restore();
   }
 
-  function drawRamp(context, ramp) {
+  function drawRamp(context, ramp, fillStyle, strokeStyle) {
     context.save();
-
+    context.fillStyle = fillStyle;
+    context.strokeStyle = strokeStyle;
     context.fillRect(ramp.x1, ramp.y1, ramp.getWidth(), ramp.getHeight());
 
     // Draw arrow
@@ -623,9 +626,11 @@
     context.restore();
   }
 
-  function drawStairs(context, stair) {
-    drawRamp(context, stair);
+  function drawStairs(context, stair, fillStyle, strokeStyle) {
+    drawRamp(context, stair, fillStyle, strokeStyle);
     context.save();
+    context.fillStyle = fillStyle;
+    context.strokeStyle = strokeStyle;
 
     const lineAmount = $floorHeight / 0.25; // Number of steps needed to get to next floor
     
