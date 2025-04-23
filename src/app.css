@@ -121,6 +121,8 @@ button:disabled {
   flex-direction: column;
   z-index: 200;
   align-items: center;
+  overflow-y: scroll;
+  max-height: 70%;
 }
 
 .side-panel {
@@ -201,6 +203,11 @@ button:disabled {
 
 .floor-button {
   background-color: var(--button-bg);
+  width: 45px;
+  height: 45px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .floor-button.active {
