@@ -15,6 +15,6 @@
 <div>
     <div class="settings-container">
         <Slider label="Floor Height" min={1} max={20} step={0.25} bind:value={height}/>
-        <Slider label="Engine Units" min={1} max={10} step={0.25} bind:value={unit}/>
+        <Slider label="Engine Units" min={0.25} max={4} step={0.25} bind:value={unit}/>
     </div>
 </div>

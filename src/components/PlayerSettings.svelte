@@ -42,8 +42,8 @@
             {/each}
         </select>
 
-        <Slider label="Height" min={1} max={20} step={0.1} bind:value={height}/>
-        <Slider label="Radius" min={0.1} max={10} step={0.1} bind:value={radius}/>
+        <Slider label="Height" min={1} max={4} step={0.1} bind:value={height}/>
+        <Slider label="Radius" min={0.1} max={1} step={0.1} bind:value={radius}/>
         <Slider label="Speed" min={0} max={20} step={0.1} bind:value={speed}/>
         <Slider label="Sprint Speed" min={0} max={20} step={0.1} bind:value={sprintSpeed}/>
         <Slider label="Jump Velocity" min={0} max={20} step={0.1} bind:value={jumpVelocity}/>
