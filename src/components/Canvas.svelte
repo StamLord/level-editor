@@ -170,6 +170,10 @@
       
       return angle;
     }
+
+    clone() {
+      return new Line(this.x1, this.y1, this.x2, this.y2);
+    }
   }
 
   class Square extends BaseData {
@@ -261,6 +265,10 @@
      isInvertedHorizontally() {
       return this.x2 < this.x1;
     }
+
+    clone() {
+      return new Square(this.x1, this.y1, this.getWidth(), this.getHeight());
+    }
   }
 
   class Ramp extends Square {
@@ -293,11 +301,19 @@
     getLength() {
       return (this.isVertical())? this.getHeight() : this.getWidth();
     }
+
+    clone() {
+      return new Ramp(this.x1, this.y1, this.getWidth(), this.getHeight(), this.direction);
+    }
   }
 
   class Stairs extends Ramp {
     constructor(x, y, width, height, direction = 0) {
       super(x, y, width, height, direction);
+    }
+
+    clone() {
+      return new Stairs(this.x1, this.y1, this.getWidth(), this.getHeight(), this.direction);
     }
   }
 
@@ -356,6 +372,10 @@
       else if (object instanceof Square)
         return this.isPointInside(object.x1, object.y1) && this.isPointInside(object.x2, object.y2) && this.isPointInside(object.x3, object.y3) && this.isPointInside(object.x4, object.y4); 
     }
+
+    clone() {
+      return new Selection(this.x1, this.y1, this.x4, this.y4);
+    }
   }
 
   const selectionColor = '#3399FF80';
@@ -389,6 +409,9 @@
 
   let canvas;
   let ctx;
+
+  const floorKeys = ['lines', 'platforms', 'ramps', 'fences', 'stairs'];
+
   let floors = [{
     lines: [], 
     platforms: [],
@@ -426,6 +449,15 @@
     };
   let moveSelectionStartX;
   let moveSelectionStartY;
+
+  let copiedSelectionRect = null; // For drawing the same selection rect without computation
+  let copiedSelectionData = {
+      lines: [],
+      platforms: [],
+      ramps: [],
+      fences: [],
+      stairs: [],
+    };
 
   onMount(() => {
     if (canvas) {
@@ -936,10 +968,25 @@
   const handleKeydown = (event) => {
     const key = event.key;
     
-    // ctrl + s exports the canvas
-    if (event.ctrlKey && event.key === "s") {
-      event.preventDefault();
-      exportCanvas();
+    
+    if (event.ctrlKey) {
+      // ctrl + s exports the canvas
+      if (event.key === "s") {
+        event.preventDefault();
+        exportCanvas();
+      }
+
+      // ctrl + c copies selection
+      if (event.key === "c" && tool === Tool.SELECT) {
+        event.preventDefault();
+        copySelectionData();
+      }
+
+      // ctrl + v pastes selection
+      if (event.key === "v" && tool === Tool.SELECT) {
+        event.preventDefault();
+        pasteSelectionData();
+      }
     }
 
     // Numbers switch floors
@@ -1239,6 +1286,39 @@
     selectionRect.move(deltaX, deltaY);
     moveSelectionStartX = x;
     moveSelectionStartY = y;
+  }
+
+  function copySelectionData() {
+    copiedSelectionRect = selectionRect.clone();
+
+    for (const key of floorKeys) {
+      copiedSelectionData[key] = selectionData[key].map(data => data.clone());
+    }
+  }
+
+  function pasteSelectionData() {
+    // TODO: Better way to detect copy buffer
+    if (copiedSelectionRect === null)
+      return;
+    
+    clearSelectionData();
+
+    // Draw new selection rect from copy
+    selectionRect = copiedSelectionRect.clone();
+    selectionState = SelectionState.PASSIVE;
+
+    // Add copied data to floor + selection
+    const floor = floors[activeFloor];
+    
+    for (const key of floorKeys) {
+      copiedSelectionData[key].forEach(data => {
+        const newData = data.clone()
+        floor[key].push(newData); 
+        selectionData[key].push(newData);
+      })
+    }
+
+    markSelectedObjects();
   }
 
   $: gridSize, zoomFactor, drawGrid();

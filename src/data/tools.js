@@ -3,7 +3,9 @@ export const tools = {
         name: "Select",
         tips: [ {button: "lmb", text: "Select"}, 
                 {button: "rmb", text: "Drag"}, 
-                {button: "rmb", text: "Cancel"}]
+                {button: "rmb", text: "Cancel"},
+                {button: "ctrl+c", text: "Copy"},
+                {button: "ctrl+v", text: "Paste"}]
     }, 
     1: {
         name: "Wall",
