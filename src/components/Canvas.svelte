@@ -1082,11 +1082,11 @@
         // Sub resources
         let boxRandomId = Math.random().toString(36).substring(2, 7); // 5-char random ID
         sub_resources += `[sub_resource type="BoxShape3D" id="BoxShape3D_${boxRandomId}"]\n`;
-        sub_resources += `size = Vector3(${length}, ${floorHeight}, ${thickness})\n\n`;
+        sub_resources += `size = Vector3(${length}, ${$floorHeight}, ${thickness})\n\n`;
 
         let quadRandomId = Math.random().toString(36).substring(2, 7); // 5-char random ID
         sub_resources += `[sub_resource type="QuadMesh" id="QuadMesh_${quadRandomId}"]\n`;
-        sub_resources += `size = Vector2(${length}, ${floorHeight})\n\n`;
+        sub_resources += `size = Vector2(${length}, ${$floorHeight})\n\n`;
 
         // StaticBody3D
         nodes += `[node name="${name}" type="StaticBody3D" parent="."]\n`;
