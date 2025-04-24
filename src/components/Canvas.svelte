@@ -955,6 +955,9 @@
 
   const handleMouseWheel = (event) => {
     event.preventDefault();
+
+    const preZoomMousePos = getMousePos(event);
+
     if (event.deltaY < 0) {
       zoomFactor *= 1.25;
     }
@@ -963,6 +966,15 @@
     }
 
     zoomFactor = Math.min(Math.max(zoomFactor, 0.25), 5);
+
+    const postZoomMousePos = getMousePos(event);
+
+    const deltaX = postZoomMousePos.x - preZoomMousePos.x;
+    const deltaY = postZoomMousePos.y - preZoomMousePos.y;
+
+    offsetX += deltaX * zoomFactor;
+    offsetY += deltaY * zoomFactor;
+
   }
 
   const handleKeydown = (event) => {
