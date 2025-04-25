@@ -4,7 +4,14 @@
   import Header from './Header.svelte';
   import Canvas from './Canvas.svelte'
   import Game from './Game.svelte';
+
+  const umamiUrl = import.meta.env.VITE_UMAMI_URL;
+  const umamiWebsiteId = import.meta.env.VITE_UMAMI_WEBSITE_ID;
 </script>
+
+<svelte:head>
+  <script defer src={`${umamiUrl}/script.js`} data-website-id={umamiWebsiteId}></script>
+</svelte:head>
 
 <Header/>
 <main>
