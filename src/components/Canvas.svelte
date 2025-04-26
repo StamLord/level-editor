@@ -111,6 +111,7 @@
 
   import { currentTool, playerHeight, playerRadius, playerSpeed, playerSprintSpeed, playerJumpVelocity } from '../stores/user';
   import { exportUnit, floorHeight } from '../stores/user';
+  import { wallMaterial, platformMaterial, fenceMaterial, rampMaterial, stairsMaterial } from '../stores/user.js';
   import { onMount } from 'svelte';
 
   class BaseData {
@@ -1216,6 +1217,11 @@
       'scale': $exportUnit / gridSize,
       'floors': floors,
       'height': $floorHeight,
+      'wallMaterial': $wallMaterial,
+      'platformMaterial': $platformMaterial,
+      'fenceMaterial': $fenceMaterial,
+      'rampMaterial': $rampMaterial,
+      'stairsMaterial': $stairsMaterial,
     };
   }
 

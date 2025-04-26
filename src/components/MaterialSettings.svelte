@@ -1,55 +1,36 @@
 <script>
     import ColorPicker from "./ColorPicker.svelte";
     import Slider from "./Slider.svelte";
-
-    let wallColor = "#5e5e5e";
-    let wallRoughness = 0.5;
-    let wallMetallic = 0.0;
-
-    let platformColor = "#5e5e5e";
-    let platformRoughness = 0.5;
-    let platformMetallic = 0.0;
-
-    let fenceColor = "#5e5e5e";
-    let fenceRoughness = 0.5;
-    let fenceMetallic = 0.0;
-
-    let rampColor = "#5e5e5e";
-    let rampRoughness = 0.5;
-    let rampMetallic = 0.0;
-
-    let stairsColor = "#5e5e5e";
-    let stairsRoughness = 0.5;
-    let stairsMetallic = 0.0;
+    import { wallMaterial, platformMaterial, fenceMaterial, rampMaterial, stairsMaterial } from '../stores/user.js';
 
 </script>
 
 <div class="settings-container">
     <div class="materials-container">
         <h2>Walls</h2>
-        <ColorPicker label="Albedo" bind:value={wallColor}/>
-        <Slider label="Roughness" min={0.0} max={1.0} step={0.01} bind:value={wallRoughness}/>
-        <Slider label="Metallic" min={0.0} max={1.0} step={0.01} bind:value={wallMetallic}/>
+        <ColorPicker label="Albedo" bind:value={$wallMaterial.albedo}/>
+        <Slider label="Roughness" min={0.0} max={1.0} step={0.01} bind:value={$wallMaterial.roughness}/>
+        <Slider label="Metallic" min={0.0} max={1.0} step={0.01} bind:value={$wallMaterial.metallic}/>
 
         <h2>Platforms</h2>
-        <ColorPicker label="Albedo" bind:value={platformColor}/>
-        <Slider label="Roughness" min={0.0} max={1.0} step={0.01} bind:value={platformRoughness}/>
-        <Slider label="Metallic" min={0.0} max={1.0} step={0.01} bind:value={platformMetallic}/>
+        <ColorPicker label="Albedo" bind:value={$platformMaterial.albedo}/>
+        <Slider label="Roughness" min={0.0} max={1.0} step={0.01} bind:value={$platformMaterial.roughness}/>
+        <Slider label="Metallic" min={0.0} max={1.0} step={0.01} bind:value={$platformMaterial.metallic}/>
 
         <h2>Fences</h2>
-        <ColorPicker label="Albedo" bind:value={fenceColor}/>
-        <Slider label="Roughness" min={0.0} max={1.0} step={0.01} bind:value={fenceRoughness}/>
-        <Slider label="Metallic" min={0.0} max={1.0} step={0.01} bind:value={fenceMetallic}/>
+        <ColorPicker label="Albedo" bind:value={$fenceMaterial.albedo}/>
+        <Slider label="Roughness" min={0.0} max={1.0} step={0.01} bind:value={$fenceMaterial.roughness}/>
+        <Slider label="Metallic" min={0.0} max={1.0} step={0.01} bind:value={$fenceMaterial.metallic}/>
 
         <h2>Ramps</h2>
-        <ColorPicker label="Albedo" bind:value={rampColor}/>
-        <Slider label="Roughness" min={0.0} max={1.0} step={0.01} bind:value={rampRoughness}/>
-        <Slider label="Metallic" min={0.0} max={1.0} step={0.01} bind:value={rampMetallic}/>
+        <ColorPicker label="Albedo" bind:value={$rampMaterial.albedo}/>
+        <Slider label="Roughness" min={0.0} max={1.0} step={0.01} bind:value={$rampMaterial.roughness}/>
+        <Slider label="Metallic" min={0.0} max={1.0} step={0.01} bind:value={$rampMaterial.metallic}/>
 
         <h2>Stairs</h2>
-        <ColorPicker label="Albedo" bind:value={stairsColor}/>
-        <Slider label="Roughness" min={0.0} max={1.0} step={0.01} bind:value={stairsRoughness}/>
-        <Slider label="Metallic" min={0.0} max={1.0} step={0.01} bind:value={stairsMetallic}/>
+        <ColorPicker label="Albedo" bind:value={$stairsMaterial.albedo}/>
+        <Slider label="Roughness" min={0.0} max={1.0} step={0.01} bind:value={$stairsMaterial.roughness}/>
+        <Slider label="Metallic" min={0.0} max={1.0} step={0.01} bind:value={$stairsMaterial.metallic}/>
     </div>
 </div>
 

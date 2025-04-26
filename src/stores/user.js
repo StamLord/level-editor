@@ -9,4 +9,34 @@ export let playerJumpVelocity = writable(4.5);
 export let exportUnit = writable(1); // Will convert grid unit (25px) into 1 meter in Godot
 export let floorHeight = writable(4); // Default height for each floor - Affects wall, ramps & stairs height
 
+export let wallMaterial = writable({
+    albedo: '#ffffff',
+    roughness: 0.5,
+    metallic: 0.0
+});
+
+export let platformMaterial = writable({
+    albedo: '#ffffff',
+    roughness: 0.5,
+    metallic: 0.0
+});
+
+export let fenceMaterial = writable({
+    albedo: '#ffffff',
+    roughness: 0.5,
+    metallic: 0.0
+});
+
+export let rampMaterial = writable({
+    albedo: '#ffffff',
+    roughness: 0.5,
+    metallic: 0.0
+});
+
+export let stairsMaterial = writable({
+    albedo: '#ffffff',
+    roughness: 0.5,
+    metallic: 0.0
+});
+
 export let currentTool = writable(0);
