@@ -1039,7 +1039,7 @@
   }
 
   const exportCanvas = () => {
-    const blob = new Blob([JSON.stringify(floors)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(getLinesData())], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -1054,8 +1054,31 @@
       const reader = new FileReader();
       reader.onload = function(e) {
         clearCanvas();
-        const floorsData = JSON.parse(e.target.result);
-        floors = floorsData.map(floor => ({
+        const levelData = JSON.parse(e.target.result);
+
+        $floorHeight = levelData.height;
+        
+        $wallMaterial.albedo = levelData.wallMaterial.albedo;
+        $wallMaterial.roughness = levelData.wallMaterial.roughness;
+        $wallMaterial.metallic = levelData.wallMaterial.metallic;
+
+        $platformMaterial.albedo = levelData.platformMaterial.albedo;
+        $platformMaterial.roughness = levelData.platformMaterial.roughness;
+        $platformMaterial.metallic = levelData.platformMaterial.metallic;
+
+        $fenceMaterial.albedo = levelData.fenceMaterial.albedo;
+        $fenceMaterial.roughness = levelData.fenceMaterial.roughness;
+        $fenceMaterial.metallic = levelData.fenceMaterial.metallic;
+
+        $rampMaterial.albedo = levelData.rampMaterial.albedo;
+        $rampMaterial.roughness = levelData.rampMaterial.roughness;
+        $rampMaterial.metallic = levelData.rampMaterial.metallic;
+
+        $stairsMaterial.albedo = levelData.stairsMaterial.albedo;
+        $stairsMaterial.roughness = levelData.stairsMaterial.roughness;
+        $stairsMaterial.metallic = levelData.stairsMaterial.metallic;
+
+        floors = levelData.floors.map(floor => ({
           lines: floor.lines.map(line => new Line(line.x1, line.y1, line.x2, line.y2)),
           platforms: floor.platforms.map(platform => new Square(platform.x1, platform.y1, platform.x2 - platform.x1, platform.y4 - platform.y1)),
           fences: floor.fences.map(fence => new Line(fence.x1, fence.y1, fence.x2, fence.y2)),
