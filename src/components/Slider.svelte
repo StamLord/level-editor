@@ -12,9 +12,41 @@
 <label for={sliderId}>{label}</label>
 <input
     id={sliderId}
+    class="slider"
     type="range"
     min={min}
     max={max}
     step={step}
     bind:value={value}>
-<input type="number" bind:value={value}>
+<input class="number" type="number" bind:value={value} step={step}>
+
+<style>
+    :root {
+        --input-bg: #444;
+    }
+
+    .slider {
+        appearance: none;
+        height: 6px;
+        transform: translateY(8px);
+        background: var(--input-bg);
+        border-radius: 8px;
+    }
+
+    .slider::-webkit-slider-thumb {
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        background: var(--text-color);
+        border-radius: 50%;
+        cursor: pointer;
+    }
+
+    .number {
+        background: var(--input-bg);
+        border: 1px solid transparent;
+        color: var(--text-color);
+        border-radius: 8px;
+        text-align: center;
+    }
+</style>

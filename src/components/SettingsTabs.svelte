@@ -1,13 +1,15 @@
 <script>
     import PlayerSettings from "../components/PlayerSettings.svelte";
     import LevelSettings from "./LevelSettings.svelte";
+    import MaterialSettings from "./MaterialSettings.svelte";
 
     const Tab = {
-    LEVEL_SETTINGS: "Level Settings",
-    PLAYER_SETTINGS: "Player Settings",
+    LEVEL_SETTINGS: "Level",
+    PLAYER_SETTINGS: "Player",
+    MATERIAL_SETTINGS: "Materials",
     };
 
-    let tabs = [Tab.LEVEL_SETTINGS, Tab.PLAYER_SETTINGS]
+    let tabs = [Tab.LEVEL_SETTINGS, Tab.PLAYER_SETTINGS, Tab.MATERIAL_SETTINGS]
 
     let active = Tab.LEVEL_SETTINGS;
 
@@ -29,6 +31,8 @@
             <PlayerSettings/>
         {:else if active === Tab.LEVEL_SETTINGS}
             <LevelSettings/>
+        {:else if active === Tab.MATERIAL_SETTINGS}
+            <MaterialSettings/>
         {/if}
     </div>
 
@@ -70,6 +74,7 @@
 
     .tab-content {
         padding: 1rem 0;
+        width: 280px;
     }
     
 </style>

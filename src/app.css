@@ -226,7 +226,6 @@ button:disabled {
 
 .settings-container label {
   grid-column: span 2;
-  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap; /* or allow wrapping: white-space: normal; */
 }
