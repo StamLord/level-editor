@@ -13,24 +13,12 @@
   <div class="center-panel">
     <div class="canvas-toolbar">
       <div class="canvas-toolbar-left">
-        <Tooltip text="{tools[Tool.SELECT].name}">
-          <button id="select-tool" class="tool-button" on:click={() => {switchTool(Tool.SELECT)}}>Q</button>
-        </Tooltip>
-        <Tooltip text="{tools[Tool.WALL].name}">
-          <button id="wall-tool" class="tool-button" on:click={() => {switchTool(Tool.WALL)}}>W</button>
-        </Tooltip>
-        <Tooltip text="{tools[Tool.PLATFORM].name}">
-          <button id="platform-tool" class="tool-button" on:click={() => {switchTool(Tool.PLATFORM)}}>E</button>
-        </Tooltip>
-        <Tooltip text="{tools[Tool.RAMP].name}">
-          <button id="ramp-tool" class="tool-button" on:click={() => {switchTool(Tool.RAMP)}}>R</button>
-        </Tooltip>
-        <Tooltip text="{tools[Tool.FENCE].name}">
-          <button id="fence-tool" class="tool-button" on:click={() => {switchTool(Tool.FENCE)}}>T</button>
-        </Tooltip>
-        <Tooltip text="{tools[Tool.STAIRS].name}">
-          <button id="stairs-tool" class="tool-button" on:click={() => {switchTool(Tool.STAIRS)}}>S</button>
-        </Tooltip>
+        <ToolButton text="Q" key="q" toolType={ToolType.SELECT}/>
+        <ToolButton text="W" key="w" toolType={ToolType.WALL}/>
+        <ToolButton text="E" key="e" toolType={ToolType.PLATFORM}/>
+        <ToolButton text="R" key="r" toolType={ToolType.RAMP}/>
+        <ToolButton text="T" key="t" toolType={ToolType.FENCE}/>
+        <ToolButton text="S" key="s" toolType={ToolType.STAIRS}/>
       </div>
       <div class="canvas-toolbar-right">
         <button
@@ -104,9 +92,9 @@
 </div>
 
 <script>
-  import Tooltip from './Tooltip.svelte';
+  import ToolButton from './ToolButton.svelte';
   import ToolInfo from './ToolInfo.svelte';
-  import { tools } from '../data/tools.js'
+  import { ToolType, Tool } from '../data/tools.js'
   import SettingsTabs from './SettingsTabs.svelte';
 
   import { currentTool, playerHeight, playerRadius, playerSpeed, playerSprintSpeed, playerJumpVelocity } from '../stores/user';
@@ -394,19 +382,6 @@
   };
 
   let mode = Mode.EDITOR;
-
-  const Tool = {
-    SELECT: 0,
-    WALL: 1,
-    PLATFORM: 2,
-    RAMP: 3,
-    FENCE: 4,
-    STAIRS: 5,
-  }
-
-  let tool = Tool.SELECT; 
-  $: tool = $currentTool;
-  $: currentTool.set(tool);
 
   let canvas;
   let ctx;
@@ -779,7 +754,7 @@
       const y = getSnapped(mousePos.y);
       isDrawing = true;
 
-      if (tool === Tool.SELECT) {
+      if ($currentTool === Tool.SELECT) {
         if (selectionState === SelectionState.NONE) {
           selectionRect = new Selection(mousePos.x, mousePos.y, mousePos.x, mousePos.y);
           selectionState = SelectionState.ACTIVE;
@@ -797,11 +772,11 @@
           }
         }
       }
-      else if (tool === Tool.WALL)
+      else if ($currentTool === Tool.WALL)
         floors[activeFloor].lines.push(new Line(x, y, x, y));
-      else if (tool === Tool.PLATFORM)
+      else if ($currentTool === Tool.PLATFORM)
         floors[activeFloor].platforms.push(new Square(x, y, 0, 0));
-      else if (tool === Tool.RAMP) {
+      else if ($currentTool === Tool.RAMP) {
         const highlighted = floors[activeFloor].ramps.filter(ramp => ramp.isHighlighted); 
         if (highlighted.length > 0) {
           isDrawing = false; // Prevent editing last ramp
@@ -809,9 +784,9 @@
         } else
           floors[activeFloor].ramps.push(new Ramp(x, y, 0, 0));
       }
-      else if (tool === Tool.FENCE)
+      else if ($currentTool === Tool.FENCE)
         floors[activeFloor].fences.push(new Line(x, y, x, y));
-      else if (tool === Tool.STAIRS) {
+      else if ($currentTool === Tool.STAIRS) {
         const highlighted = floors[activeFloor].stairs.filter(stair => stair.isHighlighted); 
         if (highlighted.length > 0) {
           isDrawing = false; // Prevent editing last stair
@@ -828,15 +803,15 @@
         startY = event.clientY;
       } // Delete 
       else if (event.button === 2) {
-        if (tool === Tool.WALL)
+        if ($currentTool === Tool.WALL)
           floors[activeFloor].lines = floors[activeFloor].lines.filter(line => line.isHighlighted == false);
-        else if (tool === Tool.PLATFORM)
+        else if ($currentTool === Tool.PLATFORM)
           floors[activeFloor].platforms = floors[activeFloor].platforms.filter(platform => platform.isHighlighted == false);
-        else if (tool === Tool.RAMP)
+        else if ($currentTool === Tool.RAMP)
           floors[activeFloor].ramps = floors[activeFloor].ramps.filter(ramp => ramp.isHighlighted == false);
-        else if (tool === Tool.FENCE)
+        else if ($currentTool === Tool.FENCE)
           floors[activeFloor].fences = floors[activeFloor].fences.filter(line => line.isHighlighted == false);
-        else if (tool === Tool.STAIRS)
+        else if ($currentTool === Tool.STAIRS)
           floors[activeFloor].stairs = floors[activeFloor].stairs.filter(stair => stair.isHighlighted == false);
       drawGrid();
     }
@@ -849,26 +824,26 @@
       const x = getSnapped(mousePos.x);
       const y = getSnapped(mousePos.y);
       
-      if (tool === Tool.SELECT) {
+      if ($currentTool === Tool.SELECT) {
         if (selectionState === SelectionState.MOVING)
           moveSelectionData(x, y);
         else if (selectionState === SelectionState.ACTIVE)
           selectionRect.updateCorner(mousePos.x, mousePos.y);
-      } else if (tool === Tool.WALL) {
+      } else if ($currentTool === Tool.WALL) {
         const lines = floors[activeFloor].lines;
         lines[lines.length - 1].x2 = x;
         lines[lines.length - 1].y2 = y;
-      } else if (tool === Tool.PLATFORM) {
+      } else if ($currentTool === Tool.PLATFORM) {
         const platforms = floors[activeFloor].platforms;
         platforms[platforms.length - 1].updateSquare(x, y);
-      } else if (tool === Tool.RAMP) {
+      } else if ($currentTool === Tool.RAMP) {
         const ramps = floors[activeFloor].ramps;
         ramps[ramps.length - 1].updateSquare(x, y);
-      } else if (tool === Tool.FENCE) {
+      } else if ($currentTool === Tool.FENCE) {
         const fences = floors[activeFloor].fences;
         fences[fences.length - 1].x2 = x;
         fences[fences.length - 1].y2 = y;
-      } else if (tool === Tool.STAIRS) {
+      } else if ($currentTool === Tool.STAIRS) {
         const stairs = floors[activeFloor].stairs;
         stairs[stairs.length - 1].updateSquare(x, y);
       }
@@ -879,19 +854,19 @@
       startY = event.clientY;
     } else {
       // Highlight
-      if (tool === Tool.WALL) {
+      if ($currentTool === Tool.WALL) {
         floors[activeFloor].lines.forEach(line => {
           line.isHighlighted = line.isPointOnLine(mousePos.x, mousePos.y);});
-      } else if (tool === Tool.PLATFORM) {
+      } else if ($currentTool === Tool.PLATFORM) {
         floors[activeFloor].platforms.forEach(platform => {
           platform.isHighlighted = platform.isPointInside(mousePos.x, mousePos.y);});
-      } else if (tool === Tool.RAMP) {
+      } else if ($currentTool === Tool.RAMP) {
         floors[activeFloor].ramps.forEach(ramp => {
           ramp.isHighlighted = ramp.isPointInside(mousePos.x, mousePos.y);});
-      } else if (tool === Tool.FENCE) {
+      } else if ($currentTool === Tool.FENCE) {
         floors[activeFloor].fences.forEach(fence => {
           fence.isHighlighted = fence.isPointOnLine(mousePos.x, mousePos.y);});
-      } else if (tool === Tool.STAIRS) {
+      } else if ($currentTool === Tool.STAIRS) {
         floors[activeFloor].stairs.forEach(stair => {
           stair.isHighlighted = stair.isPointInside(mousePos.x, mousePos.y);});
       } 
@@ -903,7 +878,7 @@
     if (event.button === 0) {
       isDrawing = false;
       
-      if (tool === Tool.SELECT) {
+      if ($currentTool === Tool.SELECT) {
         if (selectionState === SelectionState.MOVING)
           selectionState = SelectionState.PASSIVE;
         else if(selectionState === SelectionState.ACTIVE) {
@@ -940,7 +915,7 @@
     } else if (event.button === 1) {
       isPanning = false;
     } else if (event.button === 2) {
-      if (tool === Tool.SELECT) {
+      if ($currentTool === Tool.SELECT) {
         if (selectionState !== SelectionState.NONE) {
           selectionState = SelectionState.NONE;
           clearSelectionData();
@@ -990,13 +965,13 @@
       }
 
       // ctrl + c copies selection
-      if (event.key === "c" && tool === Tool.SELECT) {
+      if (event.key === "c" && $currentTool === Tool.SELECT) {
         event.preventDefault();
         copySelectionData();
       }
 
       // ctrl + v pastes selection
-      if (event.key === "v" && tool === Tool.SELECT) {
+      if (event.key === "v" && $currentTool === Tool.SELECT) {
         event.preventDefault();
         pasteSelectionData();
       }
@@ -1010,20 +985,6 @@
       else
         switchFloor(num - 1);
     }
-
-    // q,w,e,r switch tools
-    else if (key === 'q')
-      switchTool(Tool.SELECT);
-    else if (key === 'w')
-      switchTool(Tool.WALL);
-    else if (key === 'e')
-      switchTool(Tool.PLATFORM);
-    else if (key === 'r')
-      switchTool(Tool.RAMP);
-    else if (key === 't')
-      switchTool(Tool.FENCE);
-    else if (key === 's')
-      switchTool(Tool.STAIRS);
   }
 
   const clearCanvas = () => {
@@ -1193,23 +1154,11 @@
     switchModeBtnText = "Playtest";
   }
 
-  function switchTool(newTool) {
+  function switchTool() {
     if (isDrawing) return false; // Prevent switching tools mid drawing
 
-    const oldTool = getToolButton(tool);
-    if (oldTool != undefined)
-      oldTool.classList.remove('active');
-
-    tool = newTool;
-
-    const curTool = getToolButton(tool);
-    if (curTool != undefined)
-      curTool.classList.add('active');
-    
     deHighlightAll();
     drawGrid();
-
-    return true;
   }
 
   function deHighlightAll() {
@@ -1223,7 +1172,7 @@
   function getToolButton(toolId) {
     if (toolId === Tool.SELECT)
       return document.getElementById('select-tool');
-    else if (toolId === Tool.WALL)
+    else if (toolId === Tool.WALL || toolId === Tool.THICK_WALLS)
       return document.getElementById('wall-tool');
     else if (toolId === Tool.PLATFORM)
       return document.getElementById('platform-tool');

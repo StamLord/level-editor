@@ -1,9 +1,9 @@
 <script>
     import MouseIcon from "./MouseIcon.svelte";
     import { currentTool } from '../stores/user';
-    import { tools } from '../data/tools.js';
+    import { toolInfo } from '../data/tools.js';
 
-    $: toolData = tools[$currentTool];
+    $: toolData = toolInfo[$currentTool];
 </script>
 
 <div class="tool-info">

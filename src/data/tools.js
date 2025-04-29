@@ -1,4 +1,4 @@
-export const tools = {
+export const toolInfo = {
     0: {
         name: "Select",
         tips: [ {button: "lmb", text: "Select"}, 
@@ -33,5 +33,49 @@ export const tools = {
         tips: [ {button: "lmb", text: "Draw"},
                 {button: "lmb", text: "Rotate"},
                 {button: "rmb", text: "Delete"}]
+    },
+    6: {
+        name: "Thick Walls",
+        tips: [ {button: "lmb", text: "Draw"},
+                {button: "rmb", text: "Delete"}]
+    },
+}
+
+// Unique tools
+export const Tool = {
+    SELECT: 0,
+    WALL: 1,
+    PLATFORM: 2,
+    RAMP: 3,
+    FENCE: 4,
+    STAIRS: 5,
+    THICK_WALLS: 6,
+}
+
+// ToolType group multiple Tools together
+export const ToolType = {
+    SELECT: {
+    tools: [Tool.SELECT],
+    active: 0
+    },
+    WALL: {
+    tools: [Tool.WALL, Tool.THICK_WALLS],
+    active: 0
+    },
+    PLATFORM: {
+    tools: [Tool.PLATFORM],
+    active: 0
+    },
+    RAMP: {
+    tools: [Tool.RAMP],
+    active: 0
+    },
+    FENCE: {
+    tools: [Tool.FENCE],
+    active: 0
+    },
+    STAIRS: {
+    tools: [Tool.STAIRS],
+    active: 0
     },
 }
