@@ -36,7 +36,7 @@
 
 </script>
 
- <div>
+ <div class="tool-button-container">
     <AltToolHighlight bind:this={altToolRef} tools={getToolNames()} active={toolType.active}/>
     <button id={toolButtonId} 
         class="tool-button" 
@@ -47,7 +47,14 @@
 </div>
 
 <style>
+    .tool-button-container {
+        width: 50px;
+    }
+
     .tool-button {
+        width: 50px;
+        display: flex;
+        justify-content: center;
         background-color: var(--button-bg);
     }
 
