@@ -2,16 +2,16 @@
 	import { onMount, onDestroy } from 'svelte';
     import { messages } from '../data/loadingMessages';
 
-	let progress = 0;
+	let progress = 25;
 	let interval;
 
 	onMount(() => {
 		interval = setInterval(() => {
 			if (progress < 100) {
 				progress += Math.random() * 50; // simulate varying speed
-				progress = Math.min(progress, 200);
+				progress = Math.min(progress, 100);
 			}
-		}, 100);
+		}, 200);
 	});
 
 	onDestroy(() => {
