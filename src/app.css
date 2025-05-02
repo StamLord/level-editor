@@ -208,30 +208,6 @@ button:disabled {
 
 }
 
-.settings-container {
-  width: 100%;
-  display: grid;
-  grid-template-columns: auto;
-  grid-template-rows: auto;
-  gap: 10px;
-  max-width: 100%; /* prevents overflow */
-}
-
-.settings-container label {
-  grid-column: span 2;
-  text-overflow: ellipsis;
-  white-space: nowrap; /* or allow wrapping: white-space: normal; */
-}
-
-.settings-container input[type="range"] {
-  margin: 10px;
-}
-
-.settings-container input[type="number"] {
-  width: 50px;
-  margin: 10px;
-}
-
 .exports-container {
   display: flex;
   justify-content: center;

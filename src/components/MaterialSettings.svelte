@@ -42,13 +42,13 @@
     }
 
     .materials-container {
-        display:grid;
-        gap: 10px;
-        width: 100%;
-        grid-column:span 2; 
         max-height: 442px;
         overflow-x: hidden;
         overflow-y: scroll;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
     }
 
     .materials-container::-webkit-scrollbar {

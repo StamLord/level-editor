@@ -40,3 +40,6 @@ export let stairsMaterial = writable({
 });
 
 export let currentTool = writable(0);
+
+export let wallThickness = writable(0.25);
+export let fenceThickness = writable(0.25);

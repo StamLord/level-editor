@@ -18,3 +18,12 @@
         <Slider label="Engine Units" min={0.25} max={4} step={0.25} bind:value={unit}/>
     </div>
 </div>
+
+<style>
+    .settings-container {
+        display: flex;
+        flex-direction: column;
+        padding: 1rem;
+        gap: 1rem;
+    }
+</style>

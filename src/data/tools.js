@@ -9,6 +9,15 @@ export const toolInfo = {
     }, 
     1: {
         name: "Wall",
+        settings: [{
+            type: "slider",
+            label: "Thickness",
+            variable: "wallThickness",
+            min: 0.0,
+            max: 1.0,
+            step: 0.05,
+            value: 0.25
+        }],
         tips: [ {button: "lmb", text: "Draw"},
                 {button: "rmb", text: "Delete"}]
     },
@@ -25,6 +34,15 @@ export const toolInfo = {
     },
     4: {
         name: "Fence",
+        settings: [{
+            type: "slider",
+            label: "Thickness",
+            variable: "fenceThickness",
+            min: 0.0,
+            max: 1.0,
+            step: 0.05,
+            value: 0.25
+        }],
         tips: [ {button: "lmb", text: "Draw"},
                 {button: "rmb", text: "Delete"}]
     },
@@ -32,11 +50,6 @@ export const toolInfo = {
         name: "Stairs",
         tips: [ {button: "lmb", text: "Draw"},
                 {button: "lmb", text: "Rotate"},
-                {button: "rmb", text: "Delete"}]
-    },
-    6: {
-        name: "Thick Walls",
-        tips: [ {button: "lmb", text: "Draw"},
                 {button: "rmb", text: "Delete"}]
     },
 }
@@ -49,17 +62,16 @@ export const Tool = {
     RAMP: 3,
     FENCE: 4,
     STAIRS: 5,
-    THICK_WALLS: 6,
 }
 
-// ToolType group multiple Tools together
+// ToolType groups multiple Tools together
 export const ToolType = {
     SELECT: {
     tools: [Tool.SELECT],
     active: 0
     },
     WALL: {
-    tools: [Tool.WALL, Tool.THICK_WALLS],
+    tools: [Tool.WALL],
     active: 0
     },
     PLATFORM: {

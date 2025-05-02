@@ -15,7 +15,7 @@
         if (toolType.tools.length > 1)
             toolType.active = (toolType.active + 1) % toolType.tools.length;
         
-        altToolRef.show();
+        // altToolRef.show();
         $currentTool = getActiveTool();
     }
 
@@ -37,7 +37,7 @@
 </script>
 
  <div class="tool-button-container">
-    <AltToolHighlight bind:this={altToolRef} tools={getToolNames()} active={toolType.active}/>
+    <!-- <AltToolHighlight bind:this={altToolRef} tools={getToolNames()} active={toolType.active}/> -->
     <button id={toolButtonId} 
         class="tool-button" 
         class:active={getActiveTool() === $currentTool}

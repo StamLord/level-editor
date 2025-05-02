@@ -55,4 +55,11 @@
         grid-column: span 2;
         margin: 0 auto;
     }
+
+    .settings-container {
+        display: flex;
+        flex-direction: column;
+        padding: 1rem;
+        gap: 1rem;
+    }
 </style>

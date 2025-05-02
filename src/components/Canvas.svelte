@@ -8,6 +8,7 @@
 
 <div class="grid-container">
   <div class="side-panel left">
+    <ToolSettings/>
     <ToolInfo/>
   </div>
   <div class="center-panel">
@@ -96,11 +97,12 @@
   import ToolInfo from './ToolInfo.svelte';
   import { ToolType, Tool } from '../data/tools.js'
   import SettingsTabs from './SettingsTabs.svelte';
-
-  import { currentTool, playerHeight, playerRadius, playerSpeed, playerSprintSpeed, playerJumpVelocity } from '../stores/user';
+  import { currentTool, wallThickness, fenceThickness } from '../stores/user';
+  import { playerHeight, playerRadius, playerSpeed, playerSprintSpeed, playerJumpVelocity } from '../stores/user';
   import { exportUnit, floorHeight } from '../stores/user';
   import { wallMaterial, platformMaterial, fenceMaterial, rampMaterial, stairsMaterial } from '../stores/user.js';
   import { onMount } from 'svelte';
+  import ToolSettings from './ToolSettings.svelte';
 
   class BaseData {
     constructor() {
@@ -110,12 +112,13 @@
   }
 
   class Line extends BaseData {
-    constructor(x1, y1, x2, y2) {
+    constructor(x1, y1, x2, y2, thickness) {
       super();
       this.x1 = x1;
       this.y1 = y1;
       this.x2 = x2;
       this.y2 = y2;
+      this.thickness = thickness;
     }
 
     move(x, y) {
@@ -161,7 +164,7 @@
     }
 
     clone() {
-      return new Line(this.x1, this.y1, this.x2, this.y2);
+      return new Line(this.x1, this.y1, this.x2, this.y2, this.thickness);
     }
   }
 
@@ -516,15 +519,12 @@
       // Draw lines
       const lColor = setHexAlpha(lineColor, alpha);
       floor.lines.forEach(line => {
-        drawLine(ctx, line, line.isHighlighted? 4 : 2, line.isSelected? selectionColor : line.isHighlighted? lineHighlightColor : lColor);});
+        drawLine(ctx, line, line.isHighlighted? 1.25 : 1, line.isSelected? selectionColor : line.isHighlighted? lineHighlightColor : lColor);});
 
       // Draw fences
-      ctx.setLineDash([10, 5]); 
       const fColor = setHexAlpha(lineColor, alpha);
       floor.fences.forEach(fence => {
-        drawLine(ctx, fence, fence.isHighlighted? 4 : 2, fence.isSelected? selectionColor : fence.isHighlighted? lineHighlightColor :fColor);});
-      
-      ctx.setLineDash([]);
+        drawLine(ctx, fence, fence.isHighlighted? 1.25 : 1, fence.isSelected? selectionColor : fence.isHighlighted? lineHighlightColor :fColor, [10, 5]);});
 
       // Draw stairs
       const sColor = setHexAlpha(rampColor, alpha * 0.5); // Platforms start with 0.5 opacity
@@ -560,11 +560,13 @@
     ctx.restore();
   };
 
-  function drawLine(context, line, width, color) {
+  function drawLine(context, line, widthMult, color, dash=[]) {
     context.save();
 
-    context.lineWidth = width;
+    context.lineWidth = line.thickness * gridSize * widthMult;
+    context.setLineDash(dash);
     context.strokeStyle = color;
+
     context.beginPath();
     context.moveTo(line.x1, line.y1);
     context.lineTo(line.x2, line.y2);
@@ -773,7 +775,7 @@
         }
       }
       else if ($currentTool === Tool.WALL)
-        floors[activeFloor].lines.push(new Line(x, y, x, y));
+        floors[activeFloor].lines.push(new Line(x, y, x, y, $wallThickness));
       else if ($currentTool === Tool.PLATFORM)
         floors[activeFloor].platforms.push(new Square(x, y, 0, 0));
       else if ($currentTool === Tool.RAMP) {
@@ -785,7 +787,7 @@
           floors[activeFloor].ramps.push(new Ramp(x, y, 0, 0));
       }
       else if ($currentTool === Tool.FENCE)
-        floors[activeFloor].fences.push(new Line(x, y, x, y));
+        floors[activeFloor].fences.push(new Line(x, y, x, y, $fenceThickness));
       else if ($currentTool === Tool.STAIRS) {
         const highlighted = floors[activeFloor].stairs.filter(stair => stair.isHighlighted); 
         if (highlighted.length > 0) {
@@ -1040,9 +1042,9 @@
         $stairsMaterial.metallic = levelData.stairsMaterial.metallic;
 
         floors = levelData.floors.map(floor => ({
-          lines: floor.lines.map(line => new Line(line.x1, line.y1, line.x2, line.y2)),
+          lines: floor.lines.map(line => new Line(line.x1, line.y1, line.x2, line.y2, line.thickness)),
           platforms: floor.platforms.map(platform => new Square(platform.x1, platform.y1, platform.x2 - platform.x1, platform.y4 - platform.y1)),
-          fences: floor.fences.map(fence => new Line(fence.x1, fence.y1, fence.x2, fence.y2)),
+          fences: floor.fences.map(fence => new Line(fence.x1, fence.y1, fence.x2, fence.y2, fence.thickness)),
           ramps: floor.ramps.map(ramp => new Ramp(ramp.x1, ramp.y1, ramp.x2 - ramp.x1, ramp.y4 - ramp.y1, ramp.direction)),
           stairs: floor.stairs.map(stair => new Stairs(stair.x1, stair.y1, stair.x2 - stair.x1, stair.y4 - stair.y1, stair.direction)),
         }));
@@ -1172,7 +1174,7 @@
   function getToolButton(toolId) {
     if (toolId === Tool.SELECT)
       return document.getElementById('select-tool');
-    else if (toolId === Tool.WALL || toolId === Tool.THICK_WALLS)
+    else if (toolId === Tool.WALL)
       return document.getElementById('wall-tool');
     else if (toolId === Tool.PLATFORM)
       return document.getElementById('platform-tool');
