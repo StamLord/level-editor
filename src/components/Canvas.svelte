@@ -458,9 +458,18 @@
   });
 
   onMount(() => {
-        const iframe = document.getElementById("game-iframe");
-        iframe.src = "/static/LevelEditorWebApp.html";
-        updateFloorButtons();
+    const iframe = document.getElementById("game-iframe");
+    
+    const observer = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) {
+            iframe.src = "/static/LevelEditorWebApp.html";
+            observer.disconnect();
+        }
+    });
+
+    observer.observe(iframe);
+
+    updateFloorButtons();
     });
 
   const drawGrid = () => {
