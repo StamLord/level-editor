@@ -101,8 +101,9 @@
   import { playerHeight, playerRadius, playerSpeed, playerSprintSpeed, playerJumpVelocity } from '../stores/user';
   import { exportUnit, floorHeight } from '../stores/user';
   import { wallMaterial, platformMaterial, fenceMaterial, rampMaterial, stairsMaterial } from '../stores/user.js';
-  import { onMount } from 'svelte';
+  import { mount, onMount } from 'svelte';
   import ToolSettings from './ToolSettings.svelte';
+    import LoadingBar from './LoadingBar.svelte';
 
   class BaseData {
     constructor() {
@@ -462,8 +463,11 @@
     
     const observer = new IntersectionObserver(([entry]) => {
         if (entry.isIntersecting) {
-            iframe.src = "/static/LevelEditorWebApp.html";
-            observer.disconnect();
+
+          mount(LoadingBar, {target:document.body});
+          
+          iframe.src = "/static/LevelEditorWebApp.html";
+          observer.disconnect();
         }
     });
 
