@@ -102,8 +102,9 @@
   import { exportUnit, floorHeight } from '../stores/user';
   import { wallMaterial, platformMaterial, fenceMaterial, rampMaterial, stairsMaterial } from '../stores/user.js';
   import { mount, onMount } from 'svelte';
+  import { getFloorData } from '../data/floorData';
   import ToolSettings from './ToolSettings.svelte';
-    import LoadingBar from './LoadingBar.svelte';
+  import LoadingBar from './LoadingBar.svelte';
 
   class BaseData {
     constructor() {
@@ -392,13 +393,7 @@
 
   const floorKeys = ['lines', 'platforms', 'ramps', 'fences', 'stairs'];
 
-  let floors = [{
-    lines: [], 
-    platforms: [],
-    ramps: [],
-    fences: [],
-    stairs: [],
-  }];
+  let floors = [getFloorData()];
 
   let activeFloor = 0;
 
@@ -420,24 +415,12 @@
 
   let selectionState = SelectionState.NONE;
   let selectionRect = new Selection(-100, -100);
-  let selectionData = {
-      lines: [],
-      platforms: [],
-      ramps: [],
-      fences: [],
-      stairs: [],
-    };
+  let selectionData = getFloorData();
   let moveSelectionStartX;
   let moveSelectionStartY;
 
   let copiedSelectionRect = null; // For drawing the same selection rect without computation
-  let copiedSelectionData = {
-      lines: [],
-      platforms: [],
-      ramps: [],
-      fences: [],
-      stairs: [],
-    };
+  let copiedSelectionData = getFloorData();
 
   onMount(() => {
     if (canvas) {
@@ -706,13 +689,7 @@
   }
 
   function addFloor() {
-    floors.push({
-      lines: [],
-      platforms: [],
-      ramps: [],
-      fences: [],
-      stairs: [],
-    });
+    floors.push(getFloorData());
 
     updateFloorButtons();
   }
@@ -1264,13 +1241,7 @@
   }
 
   function resetSelectionData() {
-    selectionData = {
-      lines: [],
-      platforms: [],
-      ramps: [],
-      fences: [],
-      stairs: [],
-    }
+    selectionData = getFloorData();
   }
 
   function clearSelectionData() {
