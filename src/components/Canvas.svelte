@@ -969,6 +969,11 @@
       }
     }
 
+    if (event.key === "Delete" && $currentTool === Tool.SELECT) {
+      event.preventDefault();
+      deleteSelectionData();
+    }
+
     // Numbers switch floors
     const num = Number(key);
     if (!isNaN(num)) {
@@ -1295,6 +1300,16 @@
     }
 
     markSelectedObjects();
+  }
+
+  function deleteSelectionData() {
+    const floor = floors[activeFloor];
+    for (const key of floorKeys) {
+      floor[key] = floor[key].filter(data => !selectionData[key].includes(data));
+    }
+
+    resetSelectionData();
+    drawGrid();
   }
 
   $: gridSize, zoomFactor, drawGrid();

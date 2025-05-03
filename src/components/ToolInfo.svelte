@@ -19,6 +19,8 @@
                     <div class="btn-combo"><div class="btn">CTRL</div> + <div class="btn">C</div></div>
                 {:else if tip.button == "ctrl+v"}
                     <div class="btn-combo"><div class="btn">CTRL</div> + <div class="btn">V</div></div>
+                {:else if tip.button == "del"}
+                    <div class="btn-combo"><div class="btn">DEL</div></div>
                 {/if}
                 <p>{tip.text}</p>
             </row>

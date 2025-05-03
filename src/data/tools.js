@@ -5,7 +5,8 @@ export const toolInfo = {
                 {button: "rmb", text: "Drag"}, 
                 {button: "rmb", text: "Cancel"},
                 {button: "ctrl+c", text: "Copy"},
-                {button: "ctrl+v", text: "Paste"}]
+                {button: "ctrl+v", text: "Paste"},
+                {button: "del", text: "Delete"}]
     }, 
     1: {
         name: "Wall",
